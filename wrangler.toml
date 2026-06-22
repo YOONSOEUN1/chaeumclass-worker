@@ -1,0 +1,7 @@
+name = "chaeumclass"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+
+[[routes]]
+pattern = "chaeumclass.com"
+custom_domain = true
