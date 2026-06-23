@@ -315,7 +315,6 @@ const NAV = `
     <a href="#grade">학년별</a>
     <a href="#reviews">후기</a>
     <a href="#branches">지점 안내</a>
-    <a href="#visit">오시는 길</a>
     <a href="#apply" class="nav-cta">상담 신청</a>
   </div>
 </nav>`;
@@ -331,7 +330,7 @@ const FOOTER = `
 <footer>
   <div class="fbrand">${CFG.name}</div>
   <div><a href="tel:${CFG.phoneTel}">\u{1F4DE} ${CFG.phone}</a> &nbsp;·&nbsp; <a href="${CFG.kakaoUrl}" target="_blank" rel="noopener">\u{1F4AC} 카카오톡 문의</a></div>
-  <p>${CFG.address} · ${CFG.hours}</p>
+  <p>전국 200여 개 지점 운영 · 초·중·고 전과목 학습코칭</p>
   <p>© ${new Date().getFullYear()} ${CFG.name}. All Rights Reserved.</p>
 </footer>`;
 
@@ -456,9 +455,9 @@ ${NAV}
     </div>
     <div class="hero-stats">
       <div class="hstat"><div class="num" data-to="5"><span class="v">0</span><span class="u">과목</span></div><div class="lab">국·영·수·과·사 전과목</div></div>
-      <div class="hstat"><div class="num" data-to="12"><span class="v">0</span><span class="u">학년</span></div><div class="lab">초1 ~ 고3 전 학년</div></div>
+      <div class="hstat"><div class="num">전 학년</div><div class="lab">초·중·고 모든 학년 수업 가능</div></div>
       <div class="hstat"><div class="num" data-to="4"><span class="v">0</span><span class="u">단계</span></div><div class="lab">진단·설계·코칭·관리</div></div>
-      <div class="hstat"><div class="num">1:1</div><div class="lab">개별 맞춤 코칭</div></div>
+      <div class="hstat"><div class="num">개별맞춤</div><div class="lab">개별 맞춤 코칭 진행</div></div>
     </div>
   </div>
 </header>
@@ -682,25 +681,6 @@ ${NAV}
     <div class="fitem"><button class="fq" onclick="this.parentElement.classList.toggle('open')"><span><span class="qi">Q</span>첫 상담은 어떻게 진행되나요?</span><span class="ar">▾</span></button><div class="fa">부담 없이 상담 신청을 남겨 주시면 연락드립니다. 현재 성적·학습 습관·목표를 함께 파악하고, 학생에게 맞는 수업 방식을 안내해 드립니다.</div></div>
     <div class="fitem"><button class="fq" onclick="this.parentElement.classList.toggle('open')"><span><span class="qi">Q</span>수강료는 어떻게 되나요?</span><span class="ar">▾</span></button><div class="fa">학년·과목·수업 횟수에 따라 달라집니다. 상담 시 학생 상황에 맞는 합리적인 안내를 드리며, 숨겨진 추가 비용은 없습니다.</div></div>
     <div class="fitem"><button class="fq" onclick="this.parentElement.classList.toggle('open')"><span><span class="qi">Q</span>학습 상황은 어떻게 공유되나요?</span><span class="ar">▾</span></button><div class="fa">주간 학습 리포트와 정기 상담을 통해 진도·성적·태도 변화를 학부모님과 공유합니다.</div></div>
-  </div>
-</section>
-
-<!-- VISIT -->
-<section id="visit">
-  <div class="inner">
-    <div class="head-center">
-      <span class="eyebrow">Visit</span>
-      <h2 class="title">오시는 길</h2>
-    </div>
-    <div class="visit-grid">
-      <div class="visit-info">
-        <div class="vi"><span class="vic">📍</span><div><div class="vk">주소</div><div class="vv">${CFG.address}</div></div></div>
-        <div class="vi"><span class="vic">📞</span><div><div class="vk">전화</div><div class="vv"><a href="tel:${CFG.phoneTel}" style="color:#fff;text-decoration:none;">${CFG.phone}</a></div></div></div>
-        <div class="vi"><span class="vic">🕒</span><div><div class="vk">운영·상담 시간</div><div class="vv">${CFG.hours}</div></div></div>
-        <div class="vi"><span class="vic">💬</span><div><div class="vk">카카오톡</div><div class="vv"><a href="${CFG.kakaoUrl}" target="_blank" rel="noopener" style="color:#fff;text-decoration:none;">채널 바로가기 →</a></div></div></div>
-      </div>
-      <div class="visit-map">[지도 영역] 카카오/네이버 지도 임베드 코드를<br>여기에 넣어주세요</div>
-    </div>
   </div>
 </section>
 
