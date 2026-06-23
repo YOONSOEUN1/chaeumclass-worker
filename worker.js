@@ -13,10 +13,10 @@ const CFG = {
   tagline: "채워서 완성하는 학습 코칭",
   domain: "https://chaeumclass.com",
   // [TODO] 실제 정보로 교체
-  phone: "010-0000-0000",            // 전화 상담 번호
-  phoneTel: "01000000000",           // tel: 링크용 (숫자만)
-  kakaoUrl: "https://pf.kakao.com/", // 카카오톡 채널 주소
-  naverFormUrl: "",                  // 네이버 폼(없으면 빈칸 → 버튼 숨김)
+  phone: "010-2337-2458",            // 전화 상담 번호
+  phoneTel: "01023372458",           // tel: 링크용 (숫자만)
+  kakaoUrl: "http://pf.kakao.com/_KRAjG", // 카카오톡 채널 주소
+  naverFormUrl: "https://naver.me/GieISRs0", // 네이버 폼(없으면 빈칸 → 버튼 숨김)
   address: "주소 입력 예정",          // 예) 경기 ○○시 ○○로 00, 0층
   hours: "평일 14:00 ~ 22:00 · 주말 상담 가능",
   // 상담 메일 (Resend)
