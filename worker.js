@@ -15,8 +15,9 @@ const CFG = {
   // [TODO] 실제 정보로 교체
   phone: "010-2337-2458",            // 전화 상담 번호
   phoneTel: "01023372458",           // tel: 링크용 (숫자만)
-  kakaoUrl: "http://pf.kakao.com/_KRAjG", // 카카오톡 채널 주소
+  kakaoUrl: "http://pf.kakao.com/_KRAjG/chat", // 카카오톡 채널 주소
   naverFormUrl: "https://naver.me/GieISRs0", // 네이버 폼(없으면 빈칸 → 버튼 숨김)
+  kakaoMapKey: "a27e5e07ed05769aae7cdfdefe3b902a", // 카카오 지도 JavaScript 키
   address: "주소 입력 예정",          // 예) 경기 ○○시 ○○로 00, 0층
   hours: "평일 14:00 ~ 22:00 · 주말 상담 가능",
   // 상담 메일 (Resend)
@@ -302,6 +303,22 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
   .bd-grid{grid-template-columns:1fr;}
   .bd-side{position:static;}
 }
+/* BRANCH SEO 콘텐츠 (지도/정보성글/수업료표) */
+.bd-map{width:100%;height:300px;border-radius:var(--r);overflow:hidden;border:1px solid var(--sand);margin-top:6px;}
+.bd-map-ph{display:flex;align-items:center;justify-content:center;min-height:120px;background:var(--cream);color:var(--faint);font-size:.84rem;border:1px dashed var(--sand);border-radius:var(--r);text-align:center;padding:16px;margin-bottom:10px;}
+.kmap-label{position:relative;background:var(--green);color:#fff;padding:6px 12px;border-radius:8px;font-size:.8rem;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.25);}
+.kmap-label::after{content:"";position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid var(--green);}
+.bd-h3{font-size:.98rem;font-weight:800;color:var(--green);margin-bottom:8px;}
+.bd-p{font-size:.92rem;color:var(--ink);line-height:1.85;}
+.bd-article-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px;}
+.bd-extra .title{margin-bottom:18px;}
+.tuit{width:100%;border-collapse:collapse;margin:10px 0;font-size:.82rem;}
+.tuit caption{text-align:left;font-weight:800;color:var(--coral);font-size:.84rem;margin-bottom:6px;}
+.tuit th,.tuit td{border:1px solid var(--sand);padding:7px 8px;text-align:center;}
+.tuit th{background:var(--cream);color:var(--green);font-weight:700;}
+.tuit td:first-child{background:var(--cream);font-weight:600;color:var(--muted);}
+.tuit-note{font-size:.78rem;color:var(--faint);margin-top:4px;}
+@media(max-width:860px){ .bd-article-grid{grid-template-columns:1fr;} .bd-map{height:240px;} }
 </style>`;
 
 const NAV = `
@@ -331,7 +348,7 @@ const FOOTER = `
   <div class="fbrand">${CFG.name}</div>
   <div><a href="tel:${CFG.phoneTel}">\u{1F4DE} ${CFG.phone}</a> &nbsp;·&nbsp; <a href="${CFG.kakaoUrl}" target="_blank" rel="noopener">\u{1F4AC} 카카오톡 문의</a></div>
   <p>전국 200여 개 지점 운영 · 초·중·고 전과목 학습코칭</p>
-  <p>© ${new Date().getFullYear()} ${CFG.name}. All Rights Reserved.</p>
+  <p>© ${CFG.name}. All Rights Reserved.</p>
 </footer>`;
 
 /* 후기 카드 (자리표시자 — 실제 후기로 교체 가능) */
@@ -358,6 +375,145 @@ function regionCounts(){const m={};CENTERS.forEach(c=>{m[c.p]=(m[c.p]||0)+1;});r
 // 클라이언트 지점 목록용 경량 데이터
 function branchesLightJSON(){return JSON.stringify(CENTERS.map((c,i)=>({i:i,n:c.n,p:c.p,c:c.c,s:c.s,gr:c.gr})));}
 
+
+/* ===== 지점 페이지 SEO 콘텐츠 (정보성 글 / FAQ / 후기 / 카카오 지도) ===== */
+const STUDY_TIPS = {
+  "국어":"국어는 매일 한 지문씩 꾸준히 읽고 분석하는 습관이 가장 중요합니다. 문학·비문학 유형별 독해 전략과 어휘·문법을 단계적으로 쌓아, 글의 구조를 스스로 파악하는 힘을 길러 줍니다.",
+  "영어":"영어는 단어 암기·문법 이해·매일 독해가 함께 가야 실력이 쌓입니다. 어휘를 누적 관리하고 문장 구조를 분석하는 훈련으로 내신 서술형과 수능 독해를 동시에 대비합니다.",
+  "수학":"수학은 개념을 정확히 이해한 뒤 충분한 문제 풀이로 체화하는 과목입니다. 오답 노트로 틀린 유형을 반복 점검하고, 단계별 난이도 풀이로 실수를 줄여 갑니다.",
+  "과학":"과학은 원리를 그림과 실험 맥락으로 이해하면 암기 부담이 크게 줄어듭니다. 개념 간 연결을 잡고 학교 기출 유형으로 마무리해 내신 점수로 연결합니다.",
+  "사회":"사회는 흐름과 맥락을 먼저 이해한 뒤 핵심 개념을 구조화해 암기하는 것이 효율적입니다. 자료 해석·시사 문제까지 단계적으로 대비합니다."
+};
+
+const TUITION_HTML = `
+<table class="tuit"><caption>A. 서울 / 위례 / 미금 / 영통 / 동탄호수 / 동탄목동</caption>
+<tr><th></th><th>초등</th><th>중등</th><th>고등</th></tr>
+<tr><td>주 3회</td><td>230,000</td><td>247,000</td><td>280,000</td></tr>
+<tr><td>주 4회</td><td>300,000</td><td>322,000</td><td>365,000</td></tr>
+<tr><td>주 5회</td><td>370,000</td><td>397,000</td><td>450,000</td></tr></table>
+<table class="tuit"><caption>B. 그 외 지점</caption>
+<tr><th></th><th>초등</th><th>중등</th><th>고등</th></tr>
+<tr><td>주 3회</td><td>200,000</td><td>217,000</td><td>250,000</td></tr>
+<tr><td>주 4회</td><td>260,000</td><td>282,000</td><td>325,000</td></tr>
+<tr><td>주 5회</td><td>320,000</td><td>347,000</td><td>400,000</td></tr></table>
+<table class="tuit"><caption>송도 / 병점 / 삼산 / 청라</caption>
+<tr><th></th><th>초등</th><th>중등</th><th>고등</th></tr>
+<tr><td>주 1회</td><td>140,000</td><td>152,000</td><td>175,000</td></tr>
+<tr><td>주 2회</td><td>260,000</td><td>282,000</td><td>325,000</td></tr>
+<tr><td>주 3회</td><td>380,000</td><td>412,000</td><td>475,000</td></tr></table>
+<p class="tuit-note">* 수업료는 지역·회수에 따라 차이가 있습니다. 정확한 금액은 상담 시 안내해 드립니다.</p>`;
+
+function targetSummary(c){
+  const t=c.t||{};
+  const all=[t["초"],t["중"],t["고"]].filter(Boolean).join(", ");
+  if(!all) return "인근 초·중·고 학생들이 다니고 있습니다.";
+  const schools=all.split(",").map(s=>s.trim()).filter(Boolean).slice(0,5).join(", ");
+  return "주요 인근 학교로는 "+esc(schools)+" 등이 있습니다.";
+}
+
+function branchArticle(c){
+  const subjList=(c.s&&c.s.length)? c.s.join("·") : "국어·영어·수학·과학·사회";
+  const grade=esc(c.gr)||"초1~고3";
+  const tips=(c.s&&c.s.length? c.s : ["국어","영어","수학","과학","사회"])
+    .filter(s=>STUDY_TIPS[s])
+    .map(s=>`<div class="bd-block"><h3 class="bd-h3">${SUBJ_EMOJI[s]||""} ${s} 공부법</h3><p class="bd-p">${STUDY_TIPS[s]}</p></div>`).join("");
+  return `
+  <div class="bd-block">
+    <h3 class="bd-h3">📌 ${esc(c.n)}은 이런 학원입니다</h3>
+    <p class="bd-p">${esc(c.p)} ${esc(c.c)}에 자리한 <strong>${CFG.name} ${esc(c.n)}</strong>은 진단·설계·코칭·관리 4단계로 학생 한 명 한 명을 책임지는 학습코칭 학원입니다. ${esc(subjList)} 과목을 ${grade} 학생 대상으로 지도하며, 단순한 문제 풀이를 넘어 스스로 공부하는 습관과 학습 태도까지 함께 잡아 줍니다. ${targetSummary(c)}</p>
+  </div>
+  <h3 class="bd-h3" style="margin-top:24px;">📚 과목별 공부 방법</h3>
+  <div class="bd-article-grid">${tips}</div>
+  <div class="bd-block" style="margin-top:14px;">
+    <h3 class="bd-h3">📝 시험 기간, 이렇게 대비합니다</h3>
+    <p class="bd-p">시험 3~4주 전부터 ${esc(c.c)} 인근 학교의 시험 범위와 출제 경향을 분석해 대비 계획을 세웁니다. ${CFG.name} ${esc(c.n)}은 학교별 기출을 기반으로 자주 출제되는 유형을 집중 점검하고, 주말 자습과 오답 반복으로 시험을 마무리합니다.</p>
+  </div>
+  <div class="bd-block">
+    <h3 class="bd-h3">☀️ 방학, 가장 크게 성장하는 시기</h3>
+    <p class="bd-p">방학은 부족한 단원을 메우고 다음 학기를 미리 준비하기에 가장 좋은 시기입니다. 학생별 취약 단원을 집중 보강하고 다음 학기 핵심 개념을 선행하며, 규칙적인 학습 리듬이 흐트러지지 않도록 데일리 플래너로 관리합니다.</p>
+  </div>`;
+}
+
+function faqItem(q, a, open){
+  return `<div class="fitem${open?' open':''}"><button class="fq" onclick="this.parentElement.classList.toggle('open')"><span><span class="qi">Q</span>${q}</span><span class="ar">▾</span></button><div class="fa">${a}</div></div>`;
+}
+function branchFaqHtml(c){
+  const q1=faqItem(`${esc(c.n)}은 어떤 학생이 다니나요?`,
+    `${esc(c.p)} ${esc(c.c)} 지역의 ${esc(c.gr)||"초·중·고"} 학생들이 다니고 있습니다. ${targetSummary(c)} 첫 상담에서 현재 수준과 학습 습관을 진단한 뒤 학생에게 맞는 커리큘럼으로 지도합니다.`, true);
+  const q2=faqItem("어떤 과목을 배울 수 있나요?",
+    `${esc((c.s||[]).join("·"))||"국어·영어·수학·과학·사회"} 과목을 지도하며, 학생 수준에 맞춰 개별 맞춤으로 코칭합니다. 수업 가능 학년은 ${esc(c.gr)||"초1~고3"}입니다.`, false);
+  const q3=faqItem("수업료(학원비)는 어떻게 되나요?", TUITION_HTML, false);
+  const q4=faqItem("상담·등록은 어떻게 하나요?",
+    `전화(${CFG.phone}), 카카오톡 채널, 또는 홈페이지 상담 신청으로 문의하실 수 있습니다. 진단 상담은 부담 없이 받아 보실 수 있으며, 상담 후 학생에게 맞는 수업 방식을 안내해 드립니다.`, false);
+  return `<div class="faq">${q1}${q2}${q3}${q4}</div>`;
+}
+
+const REVIEW_POOL=[
+  {role:"학부모", body:"{city}에서 여러 곳을 다녀봤지만 여기서 처음으로 공부 습관이 잡혔어요. 매주 학습 상황을 공유해 주셔서 믿음이 갑니다."},
+  {role:"학생", body:"{subj} 성적이 눈에 띄게 올랐어요. 모르는 부분을 그때그때 질문할 수 있어서 좋았습니다."},
+  {role:"학부모", body:"내신 대비를 학교 기출 중심으로 꼼꼼히 해주셔서 시험 점수가 크게 올랐습니다."},
+  {role:"학부모", body:"선생님들이 아이 성향을 잘 파악해 주세요. 플래너 관리 덕분에 스스로 공부하는 시간이 늘었습니다."},
+  {role:"학생", body:"처음엔 공부가 막막했는데 단계별로 차근차근 이끌어 주셔서 자신감이 생겼어요."},
+  {role:"학부모", body:"상담이 자세하고 솔직해서 좋았습니다. 등록 후 아이가 학원 가는 걸 싫어하지 않아요."},
+  {role:"학생", body:"{subj} 개념을 확실히 잡고 나니 다른 과목 공부도 한결 수월해졌어요."},
+  {role:"학부모", body:"시험 기간에 주말 자습까지 챙겨 주셔서 큰 도움이 됐습니다. 관리가 정말 꼼꼼해요."}
+];
+function branchReviewsHtml(c, idx){
+  const subj=(c.s&&c.s.length)? c.s[0] : "전과목";
+  const city=c.c||c.p;
+  const start=idx % REVIEW_POOL.length;
+  let cards="";
+  for(let k=0;k<6;k++){
+    const r=REVIEW_POOL[(start+k)%REVIEW_POOL.length];
+    const body=r.body.replace(/{subj}/g, subj).replace(/{city}/g, city);
+    const av=r.role==="학생"?"학":"부";
+    const tag=r.role+" · "+(r.role==="학생"? subj : (c.gr||"학습코칭"));
+    cards+=reviewCard(esc(tag),"★★★★★",esc(body),av,esc(r.role),esc(city+" "+c.n));
+  }
+  return '<div class="rv-wrap"><div class="rv-track">'+cards+cards+'</div></div>';
+}
+
+function branchMapBlock(c, mapsLink){
+  return CFG.kakaoMapKey
+    ? '<div id="kmap" class="bd-map"></div>'
+    : '<div class="bd-map-ph">카카오 지도 키를 설정하면 이곳에 지도가 표시됩니다.</div><a href="'+mapsLink+'" target="_blank" rel="noopener" class="bd-maplink">네이버 지도에서 위치 보기 →</a>';
+}
+function branchMapScript(c){
+  if(!CFG.kakaoMapKey) return "";
+  const addrJson=JSON.stringify(cleanAddr(c.a));
+  const nameJson=JSON.stringify(CFG.name+" "+c.n);
+  const cityJson=JSON.stringify(c.p+" "+c.c+" "+c.n);
+  return `<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=${CFG.kakaoMapKey}&autoload=false&libraries=services"></script>
+<script>
+kakao.maps.load(function(){
+  var el=document.getElementById('kmap'); if(!el) return;
+  var map=new kakao.maps.Map(el,{center:new kakao.maps.LatLng(37.5665,126.9780),level:3});
+  var geocoder=new kakao.maps.services.Geocoder();
+  var places=new kakao.maps.services.Places();
+  var ADDR=${addrJson}, NAME=${nameJson}, CITY=${cityJson};
+  function place(y,x){
+    var pos=new kakao.maps.LatLng(y,x);
+    map.setCenter(pos);
+    new kakao.maps.Marker({map:map,position:pos});
+    var ov=new kakao.maps.CustomOverlay({position:pos,yAnchor:2.2,content:'<div class="kmap-label">'+NAME+'</div>'});
+    ov.setMap(map);
+    setTimeout(function(){map.relayout();map.setCenter(pos);},200);
+  }
+  function fail(){ el.outerHTML='<div class="bd-map-ph">지도를 불러오지 못했습니다. 위 주소를 참고해 주세요.</div>'; }
+  geocoder.addressSearch(ADDR, function(r,s){
+    if(s===kakao.maps.services.Status.OK && r[0]){ place(r[0].y,r[0].x); return; }
+    places.keywordSearch(ADDR, function(r2,s2){
+      if(s2===kakao.maps.services.Status.OK && r2[0]){ place(r2[0].y,r2[0].x); return; }
+      places.keywordSearch(CITY, function(r3,s3){
+        if(s3===kakao.maps.services.Status.OK && r3[0]){ place(r3[0].y,r3[0].x); }
+        else fail();
+      });
+    });
+  });
+});
+</script>`;
+}
+
 function buildBranchPage(idx){
   const c = CENTERS[idx];
   if(!c) return null;
@@ -368,6 +524,7 @@ function buildBranchPage(idx){
   const weekend = (c.we && c.we.indexOf('불가')<0 && c.we.indexOf('주말불가')<0) ? esc(c.we)+(c.wi?' · '+esc(c.wi):'') : '주말 미운영';
   const strength = c.st ? '<p class="bd-strength">'+esc(c.st)+'</p>' : '<p class="bd-empty">방문 상담 시 자세히 안내해 드립니다.</p>';
   const mapsLink = 'https://map.naver.com/v5/search/'+encodeURIComponent(cleanAddr(c.a));
+  const mapBlock = branchMapBlock(c, mapsLink);
 
   return `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -394,7 +551,7 @@ ${NAV}
         <h2 class="bd-h2">📍 위치 안내</h2>
         <p class="bd-addr">${addr}</p>
         ${c.g?'<p class="bd-guide">'+esc(c.g)+'</p>':''}
-        <a href="${mapsLink}" target="_blank" rel="noopener" class="bd-maplink">네이버 지도에서 보기 →</a>
+        ${mapBlock}
       </div>
       <div class="bd-block">
         <h2 class="bd-h2">🏫 인근 타깃 학교</h2>
@@ -417,8 +574,24 @@ ${NAV}
     </aside>
   </div>
 </section>
+<section class="bd-extra" style="background:var(--paper);">
+  <div class="inner">
+    <span class="eyebrow">About</span>
+    <h2 class="title" style="text-align:left;">${esc(c.c)} ${esc(c.n)} 학습코칭 안내</h2>
+    ${branchArticle(c)}
+  </div>
+</section>
+<section style="background:var(--cream);">
+  <div class="inner head-center"><span class="eyebrow">FAQ</span><h2 class="title">자주 묻는 질문</h2></div>
+  ${branchFaqHtml(c)}
+</section>
+<section style="background:var(--paper);">
+  <div class="inner head-center"><span class="eyebrow">Reviews</span><h2 class="title">${esc(c.n)} 학부모·학생 후기</h2></div>
+  ${branchReviewsHtml(c, idx)}
+</section>
 ${FOOTER}
 ${FLOATING}
+${branchMapScript(c)}
 </body></html>`;
 }
 
