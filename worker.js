@@ -283,6 +283,20 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
 .bd-addr{font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:8px;}
 .bd-guide{font-size:.9rem;color:var(--muted);line-height:1.7;margin-bottom:14px;}
 .bd-maplink{font-size:.86rem;font-weight:700;color:var(--coral);text-decoration:none;}
+.art-head{background:var(--paper);padding:96px 32px 24px;}
+.art-crumb{font-size:.8rem;color:var(--faint);margin-bottom:14px;}
+.art-crumb a{color:var(--faint);text-decoration:none;}
+.art-crumb a:hover{color:var(--coral);}
+.art-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(225,98,61,.12);color:var(--coral);font-size:.78rem;font-weight:800;padding:6px 14px;border-radius:100px;margin-bottom:16px;}
+.art-title{font-family:'Noto Serif KR',serif;font-size:clamp(1.55rem,3.8vw,2.3rem);font-weight:900;color:var(--green);line-height:1.32;margin-bottom:12px;}
+.art-title .sub{color:var(--ink);font-weight:700;}
+.art-by{font-size:.83rem;color:var(--faint);margin-bottom:16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+.art-by .by-line{width:14px;height:1px;background:var(--sand);}
+.art-lead{font-size:.95rem;color:var(--muted);line-height:1.75;border-left:3px solid var(--coral);padding-left:14px;}
+.art-thumb{position:relative;margin:22px 0 0;border-radius:var(--r-lg);overflow:hidden;min-height:300px;display:flex;align-items:flex-end;padding:30px;}
+.art-thumb-inner{position:relative;z-index:1;}
+.art-thumb h2{font-family:'Noto Serif KR',serif;font-size:clamp(1.25rem,3vw,1.9rem);font-weight:900;color:#fff;margin-bottom:14px;text-shadow:0 2px 14px rgba(0,0,0,.45);}
+@media(max-width:860px){.art-head{padding:84px 22px 18px;}.art-thumb{min-height:220px;padding:20px;}}
 .area-sec{background:var(--cream);padding:56px 32px;}
 .area-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
 .area-head .bar{width:5px;height:22px;border-radius:3px;background:var(--coral);}
@@ -304,6 +318,17 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
 .bd-empty{font-size:.9rem;color:var(--faint);}
 .bd-side{position:sticky;top:86px;}
 .bd-card{background:var(--paper);border:1px solid var(--sand);border-radius:var(--r-lg);padding:24px 26px;}
+.gg-wrap{padding:12px 0 6px;border-bottom:1px solid var(--cream);margin-bottom:4px;}
+.gg-title{font-size:.74rem;font-weight:800;color:var(--faint);margin-bottom:14px;}
+.gg-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;}
+.gg-subj{display:flex;align-items:center;gap:5px;width:60px;flex-shrink:0;font-size:.82rem;font-weight:800;color:var(--green);}
+.gg-badges{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;flex:1;}
+.gg-b{font-size:.64rem;font-weight:800;text-align:center;padding:4px 0;border-radius:6px;line-height:1.4;}
+.gg-b.off{background:#F1EFEA;color:#CBC6BC;}
+.gg-b.on.lv-e{background:#FCE9E1;color:#C24D2B;}
+.gg-b.on.lv-m{background:#E1EFE8;color:#1C5C49;}
+.gg-b.on.lv-h{background:#1C5C49;color:#fff;}
+@media(max-width:520px){.gg-subj{width:48px;font-size:.76rem;}.gg-b{font-size:.58rem;}}
 .bd-srow{display:flex;flex-direction:column;gap:3px;padding:12px 0;border-bottom:1px solid var(--cream);}
 .bd-srow .bd-sk{font-size:.74rem;font-weight:700;color:var(--faint);}
 .bd-srow .bd-sv{font-size:.92rem;font-weight:600;color:var(--green);}
@@ -456,18 +481,32 @@ const SCH_TAIL={
 const SUBJ_SLUG={"국어":"kor","영어":"eng","수학":"math","과학":"sci","사회":"soc"};
 const SLUG_SUBJ={kor:"국어",eng:"영어",math:"수학",sci:"과학",soc:"사회"};
 
+/* 동 수정 사전: 도로명 추정이 틀린 지점은 여기에 '지점명':'정확한동' 추가하면 우선 적용됨 */
+const DONG_FIX = {
+  // 예) "마두점":"마두동", "수지점":"풍덕천동"
+};
+
 function areaKeyword(c){
+  if(DONG_FIX[c.n]) return DONG_FIX[c.n];
   const toks=(c.a||"").split(/\s+/);
-  let gi=-1, guIdx=-1;
+  let gi=-1, guIdx=-1, roadIdx=-1;
   for(let i=0;i<toks.length;i++){
     if(/(시|군|구)$/.test(toks[i]) && !/(로|길|대로)$/.test(toks[i])) gi=i;
     if(/구$/.test(toks[i]) && !/(로|길|대로)$/.test(toks[i])) guIdx=i;
+    if(roadIdx<0 && /(대로|로|길)/.test(toks[i])) roadIdx=i;
   }
+  // 1) 지번 주소의 법정동
   if(gi>=0 && gi+1<toks.length){
     const t=toks[gi+1], nx=toks[gi+2]||"";
-    if(/^[가-힣]{1,4}동$/.test(t) && !/(동구|동로|동길)$/.test(t) && (/^\d/.test(nx)||/(로|길|대로|번지)/.test(nx)))
-      return t;
+    if(/^[가-힣]{1,4}동$/.test(t) && !/(동구|동로|동길)$/.test(t) && (/^\d/.test(nx)||/(로|길|대로|번지)/.test(nx))) return t;
   }
+  // 2) 도로명에서 동 추정 (덕풍동로→덕풍동 / 구갈로→구갈동)
+  if(roadIdx>=0){
+    const r=toks[roadIdx];
+    const m=r.match(/^([가-힣]{2,4}동)(로|길)/); if(m) return m[1];
+    const m2=r.match(/^([가-힣]{2,3})(로|길)/); if(m2) return m2[1]+"동";
+  }
+  // 3) 구 → 시
   if(guIdx>=0) return toks[guIdx];
   return c.c||c.p;
 }
@@ -645,7 +684,7 @@ function buildSubjectPage(idx, slug){
 ${STYLE}
 </head><body>
 ${NAV}
-<header class="bd-hero">
+<header class="bd-hero" style="${heroBg(strHash(c.n+slug))}">
   <div class="bd-hero-inner">
     <a href="/branch/${idx}" class="bd-back">← ${N} 지점 안내</a>
     <div class="bd-region">${esc(c.p)} · ${esc(c.c)} · ${KW}</div>
@@ -746,6 +785,42 @@ kakao.maps.load(function(){
 </script>`;
 }
 
+/* 지점/과목 히어로 배경 썸네일 (학습공간 · 지점별 상이 · 이미지 실패 시 초록 배경 유지) */
+function heroImg(seed){
+ const sets=["classroom,school","library,books","desk,study","classroom,interior","bookshelf,books","lecture,hall","school,hallway","study,room","blackboard,classroom","campus,building","reading,room","notebook,desk"];
+ const s=Math.abs(seed|0);
+ return "https://loremflickr.com/1280/520/"+sets[s%sets.length]+"/all?lock="+(s%9000+1);
+}
+function heroBg(seed){
+ return "background:linear-gradient(rgba(12,43,35,.72),rgba(12,43,35,.9)),url('"+heroImg(seed)+"') center/cover no-repeat,#0C2B23;";
+}
+function thumbBg(seed){
+ return "background:linear-gradient(rgba(12,43,35,.15),rgba(12,43,35,.82)),url('"+heroImg(seed)+"') center/cover no-repeat,#0C2B23;";
+}
+
+/* 과목 × 학년 배지 그리드 (지점이 맡는 학년만 활성) */
+const GG_GRADES=[["초1","lv-e"],["초2","lv-e"],["초3","lv-e"],["초4","lv-e"],["초5","lv-e"],["초6","lv-e"],["중1","lv-m"],["중2","lv-m"],["중3","lv-m"],["고1","lv-h"],["고2","lv-h"],["고3","lv-h"]];
+function gradeRange(gr){
+ const order=GG_GRADES.map(g=>g[0]);
+ const parts=(gr||"").replace(/\s/g,"").split("~");
+ let s=order.indexOf(parts[0]); let e=order.indexOf(parts[1]!==undefined?parts[1]:parts[0]);
+ if(s<0)s=0; if(e<0)e=order.length-1; if(e<s)e=order.length-1;
+ return [s,e];
+}
+function gradeGrid(c){
+ const subs=(c.s&&c.s.length)? c.s : [];
+ if(!subs.length) return '<div class="bd-srow"><span class="bd-sk">담당 과목</span><span class="bd-sv">상담 시 안내</span></div>';
+ const [s,e]=gradeRange(c.gr);
+ const rows=subs.filter(x=>SUBJ_EMOJI[x]).map(sub=>{
+   const badges=GG_GRADES.map((g,i)=>{
+     const on=(i>=s&&i<=e);
+     return '<span class="gg-b '+(on?('on '+g[1]):'off')+'">'+g[0]+'</span>';
+   }).join("");
+   return '<div class="gg-row"><div class="gg-subj">'+(SUBJ_EMOJI[sub]||"")+'<span>'+esc(sub)+'</span></div><div class="gg-badges">'+badges+'</div></div>';
+ }).join("");
+ return '<div class="gg-wrap"><div class="gg-title">📚 수강 가능 과목 · 학년</div>'+rows+'</div>';
+}
+
 function buildBranchPage(idx){
   const c = CENTERS[idx];
   if(!c) return null;
@@ -757,25 +832,36 @@ function buildBranchPage(idx){
   const strength = c.st ? '<p class="bd-strength">'+esc(c.st)+'</p>' : '<p class="bd-empty">방문 상담 시 자세히 안내해 드립니다.</p>';
   const mapsLink = 'https://map.naver.com/v5/search/'+encodeURIComponent(cleanAddr(c.a));
   const mapBlock = branchMapBlock(c, mapsLink);
+  const KW = esc(areaKeyword(c));
+  const lead = esc(c.p)+" "+esc(c.c||"")+" "+KW+" 일대 초·중·고 "+esc((c.s&&c.s.length?c.s:["전과목"]).join("·"))+" 개별지도 와와학습코칭. 진단·설계·코칭·관리 4단계로 학생마다 맞춤 관리하는 학습코칭 학원입니다.";
+  let today; try{ today=new Date().toLocaleDateString("ko-KR",{year:"numeric",month:"long",day:"numeric"}); }catch(e){ today=""; }
 
   return `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${CFG.name} ${esc(c.n)} | ${esc(c.p)} ${esc(c.c)} 학습코칭 학원</title>
-<meta name="description" content="${CFG.name} ${esc(c.n)} - ${esc(c.p)} ${esc(c.c)}. ${esc((c.s||[]).join('·'))} ${esc(c.gr)} 맞춤 학습코칭. ${addr}">
-<meta property="og:title" content="${CFG.name} ${esc(c.n)}">
-<meta property="og:description" content="${esc(c.p)} ${esc(c.c)} · ${esc((c.s||[]).join('·'))} 학습코칭">
+<title>${KW} 학원 | 개별지도 와와학습코칭 학원 · ${CFG.name} ${esc(c.n)}</title>
+<meta name="description" content="${KW} 학원 - ${esc(c.p)} ${esc(c.c)} 개별지도 와와학습코칭 학원. 초·중·고 ${esc((c.s||[]).join('·'))} ${esc(c.gr)} 맞춤 지도. ${addr}">
+<meta property="og:title" content="${KW} 학원 | 개별지도 와와학습코칭 학원">
+<meta property="og:description" content="${esc(c.p)} ${esc(c.c)} ${KW} · 초·중·고 개별지도 학습코칭">
 <meta property="og:url" content="${CFG.domain}/branch/${idx}">
 ${STYLE}
 </head><body>
 ${NAV}
-<header class="bd-hero">
-  <div class="bd-hero-inner">
-    <a href="/#branches" class="bd-back">← 전체 지점 보기</a>
-    <div class="bd-region">${esc(c.p)} · ${esc(c.c)}</div>
-    <h1 class="serif">${CFG.name} <span class="hl">${esc(c.n)}</span></h1>
-    <div class="bd-chips">${subj}${c.gr?'<span class="bd-chip light">'+esc(c.gr)+'</span>':''}</div>
+<section class="art-head">
+  <div class="inner">
+    <div class="art-crumb"><a href="/">홈</a> › <a href="/#branches">지점 안내</a> › ${KW} 학원</div>
+    <span class="art-badge">🏫 학원 안내</span>
+    <h1 class="art-title">${KW} 학원 <span class="sub">| 개별지도 와와학습코칭 학원</span></h1>
+    <div class="art-by"><span>✏️ ${CFG.name} ${esc(c.n)}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)}</span>${today?'<span class="by-line"></span><span>📅 '+today+'</span>':''}</div>
+    <p class="art-lead">${lead}</p>
+    <div class="art-thumb" style="${thumbBg(strHash(c.n+c.a))}">
+      <div class="art-thumb-inner">
+        <h2>${KW} 학원 · 개별지도 학습코칭</h2>
+        <div class="bd-chips">${subj}${c.gr?'<span class="bd-chip light">'+esc(c.gr)+'</span>':''}</div>
+      </div>
+    </div>
+    <a href="/#branches" class="bd-back" style="display:inline-block;margin-top:18px;color:var(--muted);">← 전체 지점 보기</a>
   </div>
-</header>
+</section>
 <section class="bd-body">
   <div class="inner bd-grid">
     <div class="bd-main">
@@ -798,8 +884,7 @@ ${NAV}
       <div class="bd-card">
         <div class="bd-srow"><span class="bd-sk">운영 시간</span><span class="bd-sv">${esc(c.ot)||'상담 시 안내'}</span></div>
         <div class="bd-srow"><span class="bd-sk">주말 수업</span><span class="bd-sv">${weekend}</span></div>
-        <div class="bd-srow"><span class="bd-sk">담당 과목</span><span class="bd-sv">${esc((c.s||[]).join(', '))||'상담 시 안내'}</span></div>
-        <div class="bd-srow"><span class="bd-sk">수업 가능 학년</span><span class="bd-sv">${esc(c.gr)||'상담 시 안내'}</span></div>
+        ${gradeGrid(c)}
         <a href="/#apply" class="bd-cta">이 지점 상담 신청 →</a>
         <a href="${CFG.kakaoUrl}" target="_blank" rel="noopener" class="bd-cta kakao">💬 카카오톡 문의</a>
       </div>
@@ -839,7 +924,7 @@ function HOME() {
   return `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${CFG.name} | ${CFG.tagline} · 초·중·고 학습코칭 학원</title>
+<title>${CFG.name} | ${CFG.tagline} · 초·중·고 와와학습코칭 학원</title>
 <meta name="description" content="${CFG.name} — 진단부터 관리까지 1:1 맞춤 학습코칭. 초·중·고 국어·영어·수학·과학·사회 전과목. 학습 습관과 내신을 함께 잡습니다.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="${CFG.name} | ${CFG.tagline}">
@@ -873,7 +958,7 @@ ${NAV}
   <div class="inner head-center">
     <span class="eyebrow">Why ${CFG.name}</span>
     <h2 class="title">왜 <span class="hl">${CFG.name}</span>일까요?</h2>
-    <p class="lead">문제만 풀리는 학원이 아니라, 공부하는 방법과 습관까지 채워주는 학습코칭 학원입니다.</p>
+    <p class="lead">문제만 풀리는 학원이 아니라, 공부하는 방법과 습관까지 채워주는 와와학습코칭 학원입니다.</p>
     <div class="why-grid">
       <div class="why-card"><div class="why-num">01</div><h3>정확한 진단</h3><p>현재 수준·학습 습관·취약 단원을 먼저 파악합니다. 무엇을 채워야 할지부터 분명히 합니다.</p></div>
       <div class="why-card"><div class="why-num">02</div><h3>맞춤 커리큘럼</h3><p>정해진 교재를 일괄 적용하지 않습니다. 학교·학년·시험 일정에 맞춰 학생마다 새로 설계합니다.</p></div>
