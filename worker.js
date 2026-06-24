@@ -18,6 +18,7 @@ const CFG = {
   kakaoUrl: "http://pf.kakao.com/_KRAjG/chat", // 카카오톡 채널 주소
   naverFormUrl: "https://naver.me/GieISRs0", // 네이버 폼(없으면 빈칸 → 버튼 숨김)
   kakaoMapKey: "a27e5e07ed05769aae7cdfdefe3b902a", // 카카오 지도 JavaScript 키
+  favicon: "https://raw.githubusercontent.com/YOONSOEUN1/chaeumclass-worker/main/images/chaeumclass.png", // 파비콘(브라우저 탭 아이콘). images 폴더에 같은 파일명으로 덮어쓰면 자동 반영
   address: "주소 입력 예정",          // 예) 경기 ○○시 ○○로 00, 0층
   hours: "평일 14:00 ~ 22:00 · 주말 상담 가능",
   // 상담 메일 (Resend)
@@ -28,6 +29,8 @@ const CFG = {
 /* ── 디자인 토큰 (채움클래스 전용) ──
    딥 포레스트 그린 + 코랄 포인트 + 웜 화이트 / 헤드라인 명조 */
 const STYLE = `
+<link rel="icon" type="image/png" href="${CFG.favicon}">
+<link rel="apple-touch-icon" href="${CFG.favicon}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800;900&family=Noto+Serif+KR:wght@500;600;700;900&display=swap" rel="stylesheet">
 <style>
