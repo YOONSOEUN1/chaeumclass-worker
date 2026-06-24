@@ -283,6 +283,19 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
 .bd-addr{font-size:1rem;font-weight:600;color:var(--ink);margin-bottom:8px;}
 .bd-guide{font-size:.9rem;color:var(--muted);line-height:1.7;margin-bottom:14px;}
 .bd-maplink{font-size:.86rem;font-weight:700;color:var(--coral);text-decoration:none;}
+.area-sec{background:var(--cream);padding:56px 32px;}
+.area-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.area-head .bar{width:5px;height:22px;border-radius:3px;background:var(--coral);}
+.area-h2{font-family:'Noto Serif KR',serif;font-size:1.4rem;font-weight:900;color:var(--green);}
+.area-sub{color:var(--muted);font-size:.9rem;margin:0 0 24px 15px;}
+.area-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.area-card{display:block;background:var(--paper);border:1px solid var(--sand);border-radius:var(--r);padding:22px;text-decoration:none;transition:transform .25s,box-shadow .25s,border-color .25s;}
+.area-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:var(--coral);}
+.area-ic{width:44px;height:44px;border-radius:12px;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:14px;}
+.area-card .ac-title{font-size:1.05rem;font-weight:800;color:var(--green);margin-bottom:8px;}
+.area-card .ac-desc{font-size:.84rem;color:var(--muted);line-height:1.6;margin-bottom:14px;min-height:2.7em;}
+.area-card .ac-more{font-size:.84rem;font-weight:700;color:var(--coral);}
+@media(max-width:860px){.area-grid{grid-template-columns:1fr;}}
 .bd-trow{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--cream);}
 .bd-trow:last-child{border-bottom:none;}
 .bd-tk{flex-shrink:0;width:48px;font-size:.82rem;font-weight:800;color:var(--coral);}
@@ -411,27 +424,246 @@ function targetSummary(c){
   return "주요 인근 학교로는 "+esc(schools)+" 등이 있습니다.";
 }
 
+/* ── 지점별 고유 SEO 본문 v6 (지점명 토큰 분절 보장 / 3000자+ · 6어절 중복≈0) ── */
+function strHash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+function splitSchools(v){return (v||"").split(/[,/·]/).map(x=>x.trim()).filter(Boolean);}
+
+/* 짧은 술어 조각(≤4어절). 문장은 항상 '지점명/학교명/원장명 + 조각' 구조라 6어절 연속 공유가 발생하지 않음 */
+const FR={
+ core:["빈틈을 정확히 채웁니다","약점을 진단해 메웁니다","공부 습관을 잡아 줍니다","스스로 공부하도록 돕습니다","성적과 태도를 함께 봅니다","개념부터 다시 다집니다","오답을 반복해 점검합니다","눈높이에 맞춰 지도합니다","꾸준함을 만들어 줍니다","질문을 즉시 해결합니다","기초를 단단히 세웁니다","학습 방향을 바로잡습니다"],
+ manage:["플래너로 시간을 관리합니다","주간 리포트로 공유합니다","복습 주기를 점검합니다","출결과 집중을 기록합니다","과제 이행을 확인합니다","학습톡방으로 소통합니다","월 정기고사로 점검합니다","개념노트를 관리합니다","수업 직후 피드백합니다"],
+ exam:["시험 범위를 분석합니다","기출 유형을 점검합니다","예상 문제로 연습합니다","틀린 문제를 다시 봅니다","주말 자습으로 마무리합니다","출제 경향을 정리합니다","변형 문제로 응용합니다"],
+ vac:["취약 단원을 보강합니다","다음 학기를 선행합니다","공부 리듬을 유지합니다","약점을 다시 정리합니다","기초를 한 번 더 봅니다","선행 비율을 조절합니다"],
+ env:["통학이 편한 곳입니다","걸어 오기 좋습니다","면학 분위기가 좋습니다","집중하기 좋은 환경입니다","접근성이 뛰어납니다","쾌적하게 꾸며져 있습니다"],
+ trust:["학부모와 자주 소통합니다","변화를 함께 확인합니다","투명하게 안내합니다","진행 상황을 공유합니다","작은 변화도 전합니다"],
+ lead:["{N}은","{C}의 {N}은","{N}에서는","{N} 코치진은","{C} {N}은"]
+};
+const SJF={
+ "국어":["문학·비문학을 유형별로 잡습니다","어휘와 문법을 누적합니다","독해 전략을 단계로 쌓습니다","서술형 답안을 연습합니다","지문 분석을 훈련합니다"],
+ "영어":["단어를 누적 관리합니다","구문으로 독해를 잡습니다","문법을 독해에 적용합니다","서술형 빈출을 점검합니다","듣기와 어휘를 봅니다"],
+ "수학":["개념을 스스로 설명합니다","오답 유형을 점검합니다","단계별로 실수를 줄입니다","이전 학년을 보강합니다","선행과 후행을 조절합니다"],
+ "과학":["개념을 구조화합니다","자료 해석을 훈련합니다","개념도로 흐름을 잡습니다","기출로 마무리합니다","수행과 지필을 챙깁니다"],
+ "사회":["흐름과 인과를 이해합니다","핵심만 구조화해 외웁니다","자료 해석을 반복합니다","마인드맵으로 정리합니다","서술형을 대비합니다"]
+};
+const SCH_TAIL={
+ "초":["기초와 습관을 잡습니다","연산·독해를 다집니다","학습 루틴을 만듭니다","공부 재미를 키웁니다"],
+ "중":["내신을 분석해 대비합니다","기출로 패턴을 잡습니다","수행평가를 챙깁니다","선행을 함께 설계합니다"],
+ "고":["내신과 입시를 관리합니다","수능 유형을 대비합니다","취약 단원을 보강합니다","입시 전략을 세웁니다"]
+};
+
+/* ── 지역키워드·과목 전용 페이지 + 키워드 시작 정보성 본문 ── */
+const SUBJ_SLUG={"국어":"kor","영어":"eng","수학":"math","과학":"sci","사회":"soc"};
+const SLUG_SUBJ={kor:"국어",eng:"영어",math:"수학",sci:"과학",soc:"사회"};
+
+function areaKeyword(c){
+  const toks=(c.a||"").split(/\s+/);
+  let gi=-1, guIdx=-1;
+  for(let i=0;i<toks.length;i++){
+    if(/(시|군|구)$/.test(toks[i]) && !/(로|길|대로)$/.test(toks[i])) gi=i;
+    if(/구$/.test(toks[i]) && !/(로|길|대로)$/.test(toks[i])) guIdx=i;
+  }
+  if(gi>=0 && gi+1<toks.length){
+    const t=toks[gi+1], nx=toks[gi+2]||"";
+    if(/^[가-힣]{1,4}동$/.test(t) && !/(동구|동로|동길)$/.test(t) && (/^\d/.test(nx)||/(로|길|대로|번지)/.test(nx)))
+      return t;
+  }
+  if(guIdx>=0) return toks[guIdx];
+  return c.c||c.p;
+}
+
+/* 정보성 풀 (대폭 확장 — 같은 문장 충돌 최소화) */
+const INFO={
+ choose:[
+  "학원을 고를 때는 수업 시간보다 ‘관리의 밀도’를 먼저 봐야 합니다.",
+  "성적은 진도가 아니라 학생에게 맞는 설계에서 갈립니다.",
+  "좋은 학습 코칭은 답이 아니라 공부하는 방법을 가르칩니다.",
+  "학습 습관이 잡히면 성적은 자연스럽게 따라옵니다.",
+  "내 아이에게 맞는 학원은 진단부터 다른 법입니다.",
+  "수업의 양보다 학생을 얼마나 자주 들여다보는지가 중요합니다.",
+  "같은 교재라도 누가 어떻게 관리하느냐에 따라 결과가 달라집니다.",
+  "성적이 정체될 때는 공부량이 아니라 방법을 점검해야 합니다.",
+  "학원 선택의 기준은 화려한 광고가 아니라 실제 관리 방식입니다.",
+  "아이가 스스로 공부하게 만드는 곳이 결국 오래 가는 학원입니다."],
+ coach:[
+  "학습 코칭은 떠먹여 주는 수업이 아니라 스스로 공부하는 힘을 키우는 과정입니다.",
+  "진단으로 약점을 찾고 설계로 방향을 잡아 코칭과 관리로 채워 갑니다.",
+  "같은 학년이라도 비어 있는 단원이 달라 커리큘럼은 학생마다 달라야 합니다.",
+  "플래너로 공부 시간을 확보하고 복습 주기를 정해 장기 기억으로 남깁니다.",
+  "코칭의 목표는 점수 한 번이 아니라 스스로 공부하는 습관입니다.",
+  "학생이 무엇을 모르는지 정확히 아는 데서 진짜 수업이 시작됩니다.",
+  "정해진 진도가 아니라 학생의 속도에 맞추는 것이 코칭의 본질입니다.",
+  "수업과 관리, 소통이 하나로 이어질 때 성적이 안정적으로 오릅니다."],
+ habit:[
+  "자기주도 학습은 매일 같은 시간에 앉는 작은 루틴에서 시작됩니다.",
+  "오답은 다시 푸는 것이 아니라 ‘왜 틀렸는지’ 정리하는 데서 실력이 됩니다.",
+  "공부의 양보다 방향이 먼저이고 방향이 맞으면 적은 시간으로도 오릅니다.",
+  "계획표를 스스로 짜고 지키는 경험이 쌓일수록 자신감이 생깁니다.",
+  "집중이 흐트러질 때는 시간을 늘리기보다 짧게 끊어 몰입하는 편이 낫습니다.",
+  "매일 분량을 정해 끝내는 습관이 시험 직전의 불안을 줄여 줍니다.",
+  "복습은 배운 당일과 사흘 뒤, 일주일 뒤로 나눠야 오래 기억됩니다.",
+  "스스로 설명할 수 있어야 비로소 ‘아는 것’이 됩니다.",
+  "작은 성공 경험이 쌓일수록 공부에 대한 거부감이 줄어듭니다.",
+  "휴대폰을 멀리 두는 것만으로도 학습 효율이 눈에 띄게 올라갑니다."],
+ exam:[
+  "내신은 ‘우리 학교 시험’에 맞춘 대비가 핵심이라 학교별 기출 분석이 점수를 좌우합니다.",
+  "시험 3~4주 전에는 범위를 한 차례 끝내고 남은 기간은 실전과 오답에 씁니다.",
+  "서술형이 늘어난 만큼 답을 ‘아는 것’과 ‘쓰는 것’을 분리해 훈련해야 합니다.",
+  "시험이 끝나면 결과를 분석해 다음 시험 계획을 다시 세우는 것이 중요합니다.",
+  "출제 선생님의 스타일과 수업 강조점을 파악하면 대비가 훨씬 정확해집니다.",
+  "벼락치기보다 4주 전부터의 누적 관리가 점수 편차를 줄여 줍니다.",
+  "수행평가는 시험만큼 비중이 크므로 일정에 맞춰 미리 준비해야 합니다.",
+  "오답을 모아 ‘나만의 약점 노트’를 만들면 시험 직전에 큰 힘이 됩니다."],
+ vac:[
+  "방학은 부족한 단원을 메우고 다음 학기를 미리 준비하기에 가장 좋은 시기입니다.",
+  "학기 중 시간이 부족했던 단원은 방학에 깊이 있게 다지는 것이 효과적입니다.",
+  "방학에는 선행과 보강의 비율을 학생 상태에 맞춰 조절해야 합니다.",
+  "규칙적인 등원으로 공부 리듬을 유지하면 방학 뒤 성적 격차가 벌어집니다.",
+  "방학 동안의 선행은 양보다 개념의 정확도를 우선해야 합니다.",
+  "짧아도 매일 공부하는 습관을 유지하는 것이 방학 학습의 핵심입니다.",
+  "다음 학기 첫 단원을 미리 잡아 두면 학기 초 적응이 훨씬 수월합니다."]
+};
+
 function branchArticle(c){
-  const subjList=(c.s&&c.s.length)? c.s.join("·") : "국어·영어·수학·과학·사회";
-  const grade=esc(c.gr)||"초1~고3";
-  const tips=(c.s&&c.s.length? c.s : ["국어","영어","수학","과학","사회"])
-    .filter(s=>STUDY_TIPS[s])
-    .map(s=>`<div class="bd-block"><h3 class="bd-h3">${SUBJ_EMOJI[s]||""} ${s} 공부법</h3><p class="bd-p">${STUDY_TIPS[s]}</p></div>`).join("");
-  return `
-  <div class="bd-block">
-    <h3 class="bd-h3">📌 ${esc(c.n)}은 이런 학원입니다</h3>
-    <p class="bd-p">${esc(c.p)} ${esc(c.c)}에 자리한 <strong>${CFG.name} ${esc(c.n)}</strong>은 진단·설계·코칭·관리 4단계로 학생 한 명 한 명을 책임지는 학습코칭 학원입니다. ${esc(subjList)} 과목을 ${grade} 학생 대상으로 지도하며, 단순한 문제 풀이를 넘어 스스로 공부하는 습관과 학습 태도까지 함께 잡아 줍니다. ${targetSummary(c)}</p>
+ const rng=mulberry32(strHash(c.n+"|"+c.a));
+ const pk=a=>a[Math.floor(rng()*a.length)];
+ const N=esc(c.n), C=esc(c.c||c.p), H=esc(c.h||"원장"), KW=esc(areaKeyword(c));
+ const subjects=(c.s&&c.s.length)? c.s : ["국어","영어","수학","과학","사회"];
+ const el=splitSchools(c.t&&c.t["초"]), mid=splitSchools(c.t&&c.t["중"]), hi=splitSchools(c.t&&c.t["고"]);
+ const schoolAll=el.concat(mid,hi);
+ const subjTxt=esc(subjects.join("·"));
+ let schPtr=0;
+ const nextSch=()=> schoolAll.length? esc(schoolAll[(schPtr++)%schoolAll.length]) : "";
+ const block=(title,items)=> items.length? '<div class="bd-block"><h3 class="bd-h3">'+title+'</h3><p class="bd-p">'+items.join(" ")+'</p></div>':"";
+ // 정보성 문장 끝에 고유 토큰(학교/키워드) 한 조각을 덧붙여 페이지 간 6어절 중복을 끊는다
+ const u=(sentence)=> schoolAll.length
+   ? sentence+" "+nextSch()+" 학생도 같은 원리로 지도합니다."
+   : sentence;
+
+ const intro=["<strong>"+KW+" 학원</strong>을 찾고 계신다면 한 가지만 기억하면 됩니다.",
+   u(pk(INFO.choose)), pk(INFO.coach),
+   "이곳에서는 "+subjTxt+" 과목을 "+esc(c.gr||"초1~고3")+" 학생에게 맞춰 지도합니다."];
+
+ const loc=[];
+ if(c.g) loc.push(esc(c.g)+".");
+ loc.push(KW+" 일대 학생들이 가까운 거리에서 꾸준히 다니기 좋은 환경입니다.");
+
+ const school=[];
+ if(el.length) school.push("초등은 "+esc(el.join(", "))+" 학생의 기초와 학습 습관을 잡아 줍니다.");
+ if(mid.length) school.push("중등은 "+esc(mid.join(", "))+" 등 인근 중학교 내신을 학교별로 분석해 대비합니다.");
+ if(hi.length) school.push("고등은 "+esc(hi.join(", "))+" 학생의 내신과 입시를 출제 경향에 맞춰 관리합니다.");
+ if(school.length) school.push("같은 학교 학생이 많을수록 시험 정보가 깊이 쌓여 내신 대비에 유리합니다.");
+
+ const subjBlocks=subjects.filter(s=>SJF[s]).map(s=>
+   '<div class="bd-block"><h4 class="bd-h3">'+(SUBJ_EMOJI[s]||"")+" "+s+' 공부법</h4><p class="bd-p">'+
+   s+'는 '+pk(SJF[s])+'. '+(schoolAll.length? nextSch()+' 학생은 ':'')+pk(SJF[s])+'. 학교 시험 범위에 맞춰 '+pk(SJF[s])+'.</p></div>');
+
+ const exam=[u(pk(INFO.exam)), pk(INFO.exam),
+   (mid.concat(hi).length? esc(mid.concat(hi).slice(0,4).join(", "))+" 등 학생 학교의 출제 경향을 분석해 대비합니다.":"학생 학교의 출제 경향을 분석해 대비합니다.")];
+ const vac=[u(pk(INFO.vac)), pk(INFO.vac), (schoolAll.length? nextSch()+" 학생도 ":"")+"방학 동안 데일리 플래너로 학습 리듬을 유지합니다."];
+ const habit=[u(pk(INFO.habit)), pk(INFO.habit), u(pk(INFO.habit))];
+
+ const we=c.we||"";
+ const ops=[esc(c.n)+"은 "+esc(c.ot||"평일 오후")+"부터 수업하며 학생 일정에 맞춰 시간표를 조율합니다.",
+   (!we||/불가/.test(we))? "주말 정규 수업 대신 평일 집중 관리와 시험 기간 보강으로 채웁니다."
+     : "주말에도 "+esc(we)+(c.wi&&!/불가/.test(c.wi)?"("+esc(c.wi)+")":"")+" 수업을 운영합니다.",
+   "첫 상담은 센터장 "+H+"이 직접 진행해 현재 수준과 학습 습관을 살핍니다.",
+   "전화 "+esc(CFG.phone)+"·카카오톡·홈페이지 신청으로 부담 없이 문의하실 수 있습니다."];
+
+ // 길이 보강: 고유 토큰(학교명)을 단 정보성 문장으로 채움
+ const fills=[{a:habit,p:INFO.habit},{a:exam,p:INFO.exam},{a:vac,p:INFO.vac},{a:intro,p:INFO.coach},{a:habit,p:INFO.choose}];
+ const len=()=>[intro,loc,school,exam,vac,habit,ops].reduce((x,y)=>x+y.join(" ").length,0)+subjBlocks.join(" ").length+(c.st?c.st.length:0);
+ let g=0;
+ while(len()<3400 && g<700){ const f=fills[g%fills.length]; f.a.push(u(pk(f.p))); g++; }
+
+ let html="";
+ html+=block(KW+" 학원을 찾는다면", intro);
+ html+=block(KW+" 학습 환경과 통학", loc);
+ html+=block(KW+" 인근 학교 내신 대비", school);
+ html+='<h3 class="bd-h3" style="margin-top:24px;">과목별 공부 방법</h3><div class="bd-article-grid">'+subjBlocks.join("")+'</div>';
+ html+=block("시험 기간 학습 전략", exam);
+ html+=block("방학 학습 전략", vac);
+ html+=block("자기주도 학습 습관 만들기", habit);
+ html+=block("운영·상담 안내", ops);
+ if(c.st) html+='<div class="bd-block"><h3 class="bd-h3">⭐ '+esc(c.n)+'의 강점</h3><p class="bd-p">'+esc(c.st)+'</p></div>';
+ return html;
+}
+
+/* 과목별 한 줄 설명 (카드용) */
+const SUBJ_DESC={
+ "국어":"읽기·쓰기·어휘력 기초부터 서술형 대비까지 단계별로 지도합니다.",
+ "영어":"파닉스·기초 문법·듣기·읽기를 체계적으로 지도합니다.",
+ "수학":"연산·도형·문장제 개념을 탄탄하게 잡아드립니다.",
+ "과학":"실험 원리와 탐구 능력을 키워 과학적 사고력을 기릅니다.",
+ "사회":"지리·역사·일반사회 기초를 이해 중심으로 지도합니다."
+};
+
+/* 지역+과목 카드 그리드 (이미지 스타일) */
+function areaSubjectCards(c, idx, exclude){
+ const KW=esc(areaKeyword(c));
+ const subjects=(c.s&&c.s.length? c.s : ["국어","영어","수학","과학","사회"]).filter(s=>SUBJ_SLUG[s] && s!==exclude);
+ if(!subjects.length) return "";
+ const cards=subjects.map(s=>
+   '<a class="area-card" href="/branch/'+idx+'/'+SUBJ_SLUG[s]+'">'+
+     '<div class="area-ic">'+(SUBJ_EMOJI[s]||"")+'</div>'+
+     '<div class="ac-title">'+KW+' '+s+'</div>'+
+     '<div class="ac-desc">'+(SUBJ_DESC[s]||"")+'</div>'+
+     '<div class="ac-more">자세히 보기 →</div></a>').join("");
+ return '<section class="area-sec"><div class="inner">'+
+   '<div class="area-head"><span class="bar"></span><h2 class="area-h2">'+KW+' 과목별 안내</h2></div>'+
+   '<p class="area-sub">관심 과목을 선택하면 '+KW+' 지역 맞춤 학습 안내를 확인하실 수 있습니다.</p>'+
+   '<div class="area-grid">'+cards+'</div></div></section>';
+}
+
+/* 지점 하단 '지역+과목' 카드 */
+function branchAreaButtons(c, idx){
+ return areaSubjectCards(c, idx, null);
+}
+
+/* 지역+과목 전용 SEO 페이지 */
+function buildSubjectPage(idx, slug){
+ const c=CENTERS[idx]; const subj=SLUG_SUBJ[slug];
+ if(!c||!subj) return null;
+ const rng=mulberry32(strHash(c.n+"|"+slug+"|"+c.a));
+ const pk=a=>a[Math.floor(rng()*a.length)];
+ const KW=esc(areaKeyword(c)); const N=esc(c.n);
+ const el=splitSchools(c.t&&c.t["초"]),mid=splitSchools(c.t&&c.t["중"]),hi=splitSchools(c.t&&c.t["고"]);
+ const lvlSchools = subj==="과학"||subj==="사회" ? mid.concat(hi) : el.concat(mid,hi);
+ const method=SJF[subj]||["개념을 차근차근 다집니다"];
+ const paras=[
+   "<strong>"+KW+" "+subj+" 학원</strong>을 찾는다면 가장 먼저 볼 것은 학생 수준에 맞춘 관리입니다. "+pk(INFO.choose)+" "+pk(INFO.coach),
+   subj+" 공부의 핵심은 다음과 같습니다. "+subj+"는 "+pk(method)+". 또한 "+pk(method)+". "+pk(INFO.habit),
+   KW+" 지역에서는 "+(lvlSchools.length? esc(lvlSchools.slice(0,6).join(", "))+" 등 ":"")+"학교의 시험 범위와 출제 경향에 맞춰 "+subj+"를 지도합니다. "+pk(INFO.exam),
+   "시험과 방학 전략도 중요합니다. "+pk(INFO.exam)+" "+pk(INFO.vac)+" "+subj+"는 꾸준한 누적이 결과로 이어집니다."
+ ];
+ return `<!DOCTYPE html><html lang="ko"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>${KW} ${subj} 학원 | ${CFG.name} ${N}</title>
+<meta name="description" content="${KW} ${subj} 학원을 찾는다면. ${KW} 지역 ${subj} 학습 코칭과 내신·시험 대비 안내. ${CFG.name} ${N}.">
+<meta property="og:title" content="${KW} ${subj} 학원 | ${CFG.name} ${N}">
+<meta property="og:url" content="${CFG.domain}/branch/${idx}/${slug}">
+${STYLE}
+</head><body>
+${NAV}
+<header class="bd-hero">
+  <div class="bd-hero-inner">
+    <a href="/branch/${idx}" class="bd-back">← ${N} 지점 안내</a>
+    <div class="bd-region">${esc(c.p)} · ${esc(c.c)} · ${KW}</div>
+    <h1 class="serif">${KW} <span class="hl">${subj}</span> 학원</h1>
+    <div class="bd-chips"><span class="bd-chip">${SUBJ_EMOJI[subj]||""} ${subj}</span><span class="bd-chip light">${esc(c.gr||"초·중·고")}</span></div>
   </div>
-  <h3 class="bd-h3" style="margin-top:24px;">📚 과목별 공부 방법</h3>
-  <div class="bd-article-grid">${tips}</div>
-  <div class="bd-block" style="margin-top:14px;">
-    <h3 class="bd-h3">📝 시험 기간, 이렇게 대비합니다</h3>
-    <p class="bd-p">시험 3~4주 전부터 ${esc(c.c)} 인근 학교의 시험 범위와 출제 경향을 분석해 대비 계획을 세웁니다. ${CFG.name} ${esc(c.n)}은 학교별 기출을 기반으로 자주 출제되는 유형을 집중 점검하고, 주말 자습과 오답 반복으로 시험을 마무리합니다.</p>
+</header>
+<section class="bd-body"><div class="inner">
+  ${paras.map(p=>'<div class="bd-block"><p class="bd-p">'+p+'</p></div>').join("")}
+  <div class="bd-block" style="text-align:center;">
+    <a href="/#apply" class="bd-cta" style="display:inline-block;max-width:320px;">${KW} ${subj} 상담 신청 →</a>
+    <a href="${CFG.kakaoUrl}" target="_blank" rel="noopener" class="bd-cta kakao" style="display:inline-block;max-width:320px;">💬 카카오톡 문의</a>
   </div>
-  <div class="bd-block">
-    <h3 class="bd-h3">☀️ 방학, 가장 크게 성장하는 시기</h3>
-    <p class="bd-p">방학은 부족한 단원을 메우고 다음 학기를 미리 준비하기에 가장 좋은 시기입니다. 학생별 취약 단원을 집중 보강하고 다음 학기 핵심 개념을 선행하며, 규칙적인 학습 리듬이 흐트러지지 않도록 데일리 플래너로 관리합니다.</p>
-  </div>`;
+  </div></section>
+${areaSubjectCards(c, idx, subj)}
+${FOOTER}
+${FLOATING}
+</body></html>`;
 }
 
 function faqItem(q, a, open){
@@ -589,6 +821,7 @@ ${NAV}
   <div class="inner head-center"><span class="eyebrow">Reviews</span><h2 class="title">${esc(c.n)} 학부모·학생 후기</h2></div>
   ${branchReviewsHtml(c, idx)}
 </section>
+${branchAreaButtons(c, idx)}
 ${FOOTER}
 ${FLOATING}
 ${branchMapScript(c)}
@@ -1001,6 +1234,7 @@ function SITEMAP() {
   let urls = `<url><loc>${CFG.domain}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>`;
   CENTERS.forEach((c, i) => {
     urls += `<url><loc>${CFG.domain}/branch/${i}</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>`;
+    (c.s||[]).forEach((s) => { if (SUBJ_SLUG[s]) urls += `<url><loc>${CFG.domain}/branch/${i}/${SUBJ_SLUG[s]}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>`; });
   });
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -1020,9 +1254,13 @@ export default {
     if (p === "/favicon.ico") return new Response(null, { status: 204 });
 
     if (p.startsWith("/branch/")) {
-      const idx = parseInt(p.split("/")[2], 10);
-      const page = isNaN(idx) ? null : buildBranchPage(idx);
-      if (page) return new Response(page, { headers: H });
+      const parts = p.split("/");
+      const idx = parseInt(parts[2], 10);
+      const slug = parts[3];
+      if (!isNaN(idx)) {
+        const page = slug ? buildSubjectPage(idx, slug) : buildBranchPage(idx);
+        if (page) return new Response(page, { headers: H });
+      }
     }
     // 그 외 모든 경로는 홈으로 (단일 페이지 구성)
     return new Response(HOME(), { headers: H });
