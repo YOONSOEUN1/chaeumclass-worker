@@ -841,9 +841,9 @@ function buildBranchPage(idx){
 
   return `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${KW} 학원 | 개별지도 와와학습코칭 학원 · ${CFG.name} ${esc(c.n)}</title>
-<meta name="description" content="${KW} 학원 - ${esc(c.p)} ${esc(c.c)} 개별지도 와와학습코칭 학원. 초·중·고 ${esc((c.s||[]).join('·'))} ${esc(c.gr)} 맞춤 지도. ${addr}">
-<meta property="og:title" content="${KW} 학원 | 개별지도 와와학습코칭 학원">
+<title>${KW} 학원 | 개별지도 와와학습코칭 ${esc(c.n)}</title>
+<meta name="description" content="${KW} 학원 - ${esc(c.p)} ${esc(c.c)} 개별지도 와와학습코칭 ${esc(c.n)}. 초·중·고 ${esc((c.s||[]).join('·'))} ${esc(c.gr)} 맞춤 지도. ${addr}">
+<meta property="og:title" content="${KW} 학원 | 개별지도 와와학습코칭 ${esc(c.n)}">
 <meta property="og:description" content="${esc(c.p)} ${esc(c.c)} ${KW} · 초·중·고 개별지도 학습코칭">
 <meta property="og:url" content="${CFG.domain}/branch/${idx}">
 ${STYLE}
@@ -853,7 +853,7 @@ ${NAV}
   <div class="inner">
     <div class="art-crumb"><a href="/">홈</a> › <a href="/#branches">지점 안내</a> › ${KW} 학원</div>
     <span class="art-badge">🏫 학원 안내</span>
-    <h1 class="art-title">${KW} 학원 <span class="sub">| 개별지도 와와학습코칭 학원</span></h1>
+    <h1 class="art-title">${KW} 학원 <span class="sub">| 개별지도 와와학습코칭 ${esc(c.n)}</span></h1>
     <div class="art-by"><span>✏️ ${CFG.name} ${esc(c.n)}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)}</span>${today?'<span class="by-line"></span><span>📅 '+today+'</span>':''}</div>
     <p class="art-lead">${lead}</p>
     <div class="art-thumb" style="${thumbBg(strHash(c.n+c.a))}">
