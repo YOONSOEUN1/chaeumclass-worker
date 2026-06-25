@@ -320,6 +320,8 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
 .bd-strength{font-size:.92rem;color:var(--ink);line-height:1.85;white-space:pre-line;}
 .bd-empty{font-size:.9rem;color:var(--faint);}
 .bd-school-note{margin-top:14px;padding:12px 14px;background:var(--cream);border-radius:10px;font-size:.86rem;color:var(--green-soft);font-weight:600;line-height:1.6;}
+.bd-reserve{margin:14px 0;padding:13px 15px;background:#FCEEE9;border-left:3px solid var(--coral);border-radius:0 10px 10px 0;font-size:.88rem;color:var(--green-deep);font-weight:600;line-height:1.65;}
+.bd-reserve a{color:var(--coral);font-weight:800;}
 .bd-side{position:sticky;top:86px;}
 .bd-card{background:var(--paper);border:1px solid var(--sand);border-radius:var(--r-lg);padding:24px 26px;}
 .gg-wrap{padding:12px 0 6px;border-bottom:1px solid var(--cream);margin-bottom:4px;}
@@ -328,10 +330,10 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
 .gg-subj{display:flex;align-items:center;gap:5px;width:60px;flex-shrink:0;font-size:.82rem;font-weight:800;color:var(--green);}
 .gg-badges{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;flex:1;}
 .gg-b{font-size:.64rem;font-weight:800;text-align:center;padding:4px 0;border-radius:6px;line-height:1.4;}
-.gg-b.off{background:#F1EFEA;color:#CBC6BC;}
-.gg-b.on.lv-e{background:#FCE9E1;color:#C24D2B;}
-.gg-b.on.lv-m{background:#E1EFE8;color:#1C5C49;}
-.gg-b.on.lv-h{background:#1C5C49;color:#fff;}
+.gg-b.off{background:#ECEAE5;color:#BDB8AE;opacity:.55;}
+.gg-b.on.lv-e{background:#E1623D;color:#fff;box-shadow:0 1px 3px rgba(225,98,61,.3);}
+.gg-b.on.lv-m{background:#2E7D63;color:#fff;box-shadow:0 1px 3px rgba(46,125,99,.3);}
+.gg-b.on.lv-h{background:#123F33;color:#fff;box-shadow:0 1px 3px rgba(18,63,51,.3);}
 @media(max-width:520px){.gg-subj{width:48px;font-size:.76rem;}.gg-b{font-size:.58rem;}}
 .bd-srow{display:flex;flex-direction:column;gap:3px;padding:12px 0;border-bottom:1px solid var(--cream);}
 .bd-srow .bd-sk{font-size:.74rem;font-weight:700;color:var(--faint);}
@@ -701,7 +703,7 @@ const DONG_FIX = {
 };
 
 function areaKeyword(c){
-  if(DONG_FIX[c.n]) return DONG_FIX[c.n];
+  if(DONG_FIX[c.n]) return DONG_FIX[c.n].replace(/동\d+가$/,'동');
   const toks=(c.a||"").split(/\s+/);
   let gi=-1, guIdx=-1, roadIdx=-1;
   for(let i=0;i<toks.length;i++){
@@ -966,7 +968,7 @@ function branchMapBlock(c, mapsLink){
 function branchMapScript(c){
   if(!CFG.kakaoMapKey) return "";
   const addrJson=JSON.stringify(cleanAddr(c.a));
-  const nameJson=JSON.stringify(branchBrand(c));
+  const nameJson=JSON.stringify(branchBrand(c)+" "+branchName(c));
   const cityJson=JSON.stringify(c.p+" "+c.c+" "+c.n);
   return `<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=${CFG.kakaoMapKey}&autoload=false&libraries=services"></script>
 <script>
@@ -1178,12 +1180,13 @@ ${NAV}
         <h2 class="bd-h2">📍 위치 안내</h2>
         <p class="bd-addr">${addr}</p>
         ${c.g?'<p class="bd-guide">'+esc(c.g)+'</p>':''}
+        <p class="bd-reserve">📞 학원 상담은 예약제로 진행됩니다. 방문 전 꼭 <a href="tel:${CFG.phoneTel}">${CFG.phone}</a>로 연락 주세요.</p>
         ${mapBlock}
       </div>
       <div class="bd-block">
-        <h2 class="bd-h2">🏫 인근 타깃 학교</h2>
+        <h2 class="bd-h2">🏫 인근 타겟 학교</h2>
         ${tgt}
-        <p class="bd-school-note">📌 위에 없는 학교도 문의 주시면 수업 가능합니다. 편하게 상담 남겨 주세요.</p>
+        <p class="bd-school-note">📌 현재 재학 중인 학교로 문의 주시면 수업 가능합니다. 편하게 상담 남겨 주세요.</p>
       </div>
       <div class="bd-block">
         <h2 class="bd-h2">⭐ 이 지점의 강점</h2>
