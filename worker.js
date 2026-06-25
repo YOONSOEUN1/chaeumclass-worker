@@ -310,6 +310,10 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
 .area-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:var(--coral);}
 .area-ic{width:44px;height:44px;border-radius:12px;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:14px;}
 .area-card .ac-title{font-size:1.05rem;font-weight:800;color:var(--green);margin-bottom:8px;}
+.area-card-wrap{display:flex;flex-direction:column;}
+.ac-grades{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+.ac-grade{font-size:.78rem;font-weight:700;background:var(--cream);border:1px solid var(--sand);color:var(--green);padding:6px 11px;border-radius:8px;text-decoration:none;transition:.15s;}
+.ac-grade:hover{background:var(--green);color:#fff;border-color:var(--green);}
 .area-card .ac-desc{font-size:.84rem;color:var(--muted);line-height:1.6;margin-bottom:14px;min-height:2.7em;}
 .area-card .ac-more{font-size:.84rem;font-weight:700;color:var(--coral);}
 @media(max-width:860px){.area-grid{grid-template-columns:1fr;}}
@@ -840,7 +844,6 @@ function branchArticle(c){
  html+=block("방학 학습 전략", vac);
  html+=block("자기주도 학습 습관 만들기", habit);
  html+=block("운영·상담 안내", ops);
- if(c.st) html+='<div class="bd-block"><h3 class="bd-h3">⭐ '+esc(c.n)+'의 강점</h3><p class="bd-p">'+esc(c.st)+'</p></div>';
  return html;
 }
 
@@ -854,19 +857,32 @@ const SUBJ_DESC={
 };
 
 /* 지역+과목 카드 그리드 (이미지 스타일) */
+const GRADE_LV={elem:"초등",mid:"중등",high:"고등"};
+function branchLevels(c){
+ const [s,e]=gradeRange(c.gr); const out=[];
+ if(s<=5) out.push("elem");
+ if(s<=8 && e>=6) out.push("mid");
+ if(e>=9) out.push("high");
+ return out;
+}
 function areaSubjectCards(c, idx, exclude){
  const KW=esc(areaKeyword(c));
  const subjects=(c.s&&c.s.length? c.s : ["국어","영어","수학","과학","사회"]).filter(s=>SUBJ_SLUG[s] && s!==exclude);
  if(!subjects.length) return "";
- const cards=subjects.map(s=>
-   '<a class="area-card" href="/branch/'+idx+'/'+SUBJ_SLUG[s]+'">'+
+ const lvls=branchLevels(c);
+ const cards=subjects.map(s=>{
+   const card='<a class="area-card" href="/branch/'+idx+'/'+SUBJ_SLUG[s]+'">'+
      '<div class="area-ic">'+(SUBJ_EMOJI[s]||"")+'</div>'+
-     '<div class="ac-title">'+KW+' '+s+'</div>'+
+     '<div class="ac-title">'+KW+' '+s+'학원</div>'+
      '<div class="ac-desc">'+(SUBJ_DESC[s]||"")+'</div>'+
-     '<div class="ac-more">자세히 보기 →</div></a>').join("");
+     '<div class="ac-more">자세히 보기 →</div></a>';
+   const gradeLinks=lvls.length? '<div class="ac-grades">'+lvls.map(lv=>
+       '<a class="ac-grade" href="/branch/'+idx+'/'+SUBJ_SLUG[s]+'/'+lv+'">'+KW+' '+GRADE_LV[lv]+' '+s+'학원</a>').join("")+'</div>' : "";
+   return '<div class="area-card-wrap">'+card+gradeLinks+'</div>';
+ }).join("");
  return '<section class="area-sec"><div class="inner">'+
    '<div class="area-head"><span class="bar"></span><h2 class="area-h2">'+KW+' 과목별 안내</h2></div>'+
-   '<p class="area-sub">관심 과목을 선택하면 '+KW+' 지역 맞춤 학습 안내를 확인하실 수 있습니다.</p>'+
+   '<p class="area-sub">관심 과목·학년을 선택하면 '+KW+' 지역 맞춤 학습 안내를 확인하실 수 있습니다.</p>'+
    '<div class="area-grid">'+cards+'</div></div></section>';
 }
 
@@ -876,42 +892,49 @@ function branchAreaButtons(c, idx){
 }
 
 /* 지역+과목 전용 SEO 페이지 */
-function buildSubjectPage(idx, slug){
+function buildSubjectPage(idx, slug, lvl){
  const c=CENTERS[idx]; const subj=SLUG_SUBJ[slug];
  if(!c||!subj) return null;
- const rng=mulberry32(strHash(c.n+"|"+slug+"|"+c.a));
+ if(lvl){ if(!GRADE_LV[lvl] || branchLevels(c).indexOf(lvl)<0) return null; }
+ const lvLabel = lvl? GRADE_LV[lvl] : "";
+ const subjFull = (lvLabel? lvLabel+" ":"")+subj+"학원";   // 예: "초등 국어학원" / "국어학원"
+ const rng=mulberry32(strHash(c.n+"|"+slug+"|"+(lvl||"")+"|"+c.a));
  const pk=a=>a[Math.floor(rng()*a.length)];
  const KW=esc(areaKeyword(c)); const N=esc(c.n);
  const el=splitSchools(c.t&&c.t["초"]),mid=splitSchools(c.t&&c.t["중"]),hi=splitSchools(c.t&&c.t["고"]);
- const lvlSchools = subj==="과학"||subj==="사회" ? mid.concat(hi) : el.concat(mid,hi);
+ const lvlSchools = lvl==="elem"? el : lvl==="mid"? mid : lvl==="high"? hi
+   : (subj==="과학"||subj==="사회" ? mid.concat(hi) : el.concat(mid,hi));
  const method=SJF[subj]||["개념을 차근차근 다집니다"];
+ const lvPhrase = lvLabel? lvLabel+" " : "";
  const paras=[
-   "<strong>"+KW+" "+subj+" 학원</strong>을 찾는다면 가장 먼저 볼 것은 학생 수준에 맞춘 관리입니다. "+pk(INFO.choose)+" "+pk(INFO.coach),
-   subj+" 공부의 핵심은 다음과 같습니다. "+subj+"는 "+pk(method)+". 또한 "+pk(method)+". "+pk(INFO.habit),
-   KW+" 지역에서는 "+(lvlSchools.length? esc(lvlSchools.slice(0,6).join(", "))+" 등 ":"")+"학교의 시험 범위와 출제 경향에 맞춰 "+subj+"를 지도합니다. "+pk(INFO.exam),
+   "<strong>"+KW+" "+lvPhrase+subj+" 학원</strong>을 찾는다면 가장 먼저 볼 것은 학생 수준에 맞춘 관리입니다. "+pk(INFO.choose)+" "+pk(INFO.coach),
+   lvPhrase+subj+" 공부의 핵심은 다음과 같습니다. "+subj+"는 "+pk(method)+". 또한 "+pk(method)+". "+pk(INFO.habit),
+   KW+" 지역에서는 "+(lvlSchools.length? esc(lvlSchools.slice(0,6).join(", "))+" 등 ":"")+"학교의 시험 범위와 출제 경향에 맞춰 "+lvPhrase+subj+"를 지도합니다. "+pk(INFO.exam),
    "시험과 방학 전략도 중요합니다. "+pk(INFO.exam)+" "+pk(INFO.vac)+" "+subj+"는 꾸준한 누적이 결과로 이어집니다."
  ];
+ const urlPath = "/branch/"+idx+"/"+slug+(lvl?"/"+lvl:"");
  return `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${KW} ${subj} 학원 | ${esc(branchFull(c))}</title>
-<meta name="description" content="${KW} ${subj} 학원을 찾는다면. ${KW} 지역 ${subj} 학습 코칭과 내신·시험 대비 안내. ${esc(branchFull(c))}.">
-<meta property="og:title" content="${KW} ${subj} 학원 | ${esc(branchFull(c))}">
-<meta property="og:url" content="${CFG.domain}/branch/${idx}/${slug}">
+<title>${KW} ${subjFull} | ${esc(branchFull(c))}</title>
+<meta name="description" content="${KW} ${subjFull}을 찾는다면. ${KW} 지역 ${lvPhrase}${subj} 학습 코칭과 내신·시험 대비 안내. ${esc(branchFull(c))}.">
+<meta property="og:title" content="${KW} ${subjFull} | ${esc(branchFull(c))}">
+<meta property="og:url" content="${CFG.domain}${urlPath}">
 ${STYLE}
 </head><body>
 ${NAV}
-<header class="bd-hero" style="${heroBg(strHash(c.n+slug))}">
+<header class="bd-hero" style="${heroBg(strHash(c.n+slug+(lvl||"")))}">
   <div class="bd-hero-inner">
     <a href="/branch/${idx}" class="bd-back">← ${N} 지점 안내</a>
     <div class="bd-region">${esc(c.p)} · ${esc(c.c)} · ${KW}</div>
-    <h1 class="serif">${KW} <span class="hl">${subj}</span> 학원</h1>
-    <div class="bd-chips"><span class="bd-chip">${SUBJ_EMOJI[subj]||""} ${subj}</span><span class="bd-chip light">${esc(c.gr||"초·중·고")}</span></div>
+    <h1 class="serif">${KW} ${lvPhrase?esc(lvLabel)+" ":""}<span class="hl">${subj}</span>학원</h1>
+    <div class="bd-chips"><span class="bd-chip">${SUBJ_EMOJI[subj]||""} ${subj}</span>${lvLabel?'<span class="bd-chip light">'+esc(lvLabel)+'</span>':'<span class="bd-chip light">'+esc(c.gr||"초·중·고")+'</span>'}</div>
   </div>
 </header>
 <section class="bd-body"><div class="inner">
   ${paras.map(p=>'<div class="bd-block"><p class="bd-p">'+p+'</p></div>').join("")}
+  ${lvl?'':lvlLinksRow(c,idx,slug)}
   <div class="bd-block" style="text-align:center;">
-    <a href="/branch/${idx}#branch-apply" class="bd-cta" style="display:inline-block;max-width:320px;">${KW} ${subj} 상담 신청 →</a>
+    <a href="/branch/${idx}#branch-apply" class="bd-cta" style="display:inline-block;max-width:320px;">${KW} ${lvPhrase}${subj} 상담 신청 →</a>
     <a href="tel:${CFG.phoneTel}" class="bd-cta bd-tel" style="display:inline-block;max-width:320px;">📞 전화 상담 ${CFG.phone}</a>
   </div>
   </div></section>
@@ -919,6 +942,14 @@ ${areaSubjectCards(c, idx, subj)}
 ${FOOTER}
 ${FLOATING}
 </body></html>`;
+}
+
+/* 과목 페이지 안의 '학년별 바로가기' 줄 */
+function lvlLinksRow(c, idx, slug){
+ const lvls=branchLevels(c); if(!lvls.length) return "";
+ const KW=esc(areaKeyword(c)); const subj=SLUG_SUBJ[slug];
+ const links=lvls.map(lv=>'<a class="ac-grade" href="/branch/'+idx+'/'+slug+'/'+lv+'">'+KW+' '+GRADE_LV[lv]+' '+subj+'학원</a>').join("");
+ return '<div class="bd-block"><h3 class="bd-h3" style="margin-bottom:12px;">학년별 '+subj+' 안내</h3><div class="ac-grades">'+links+'</div></div>';
 }
 
 function faqItem(q, a, open){
@@ -1634,7 +1665,7 @@ function SITEMAP() {
   let urls = `<url><loc>${CFG.domain}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>`;
   CENTERS.forEach((c, i) => {
     urls += `<url><loc>${CFG.domain}/branch/${i}</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>`;
-    (c.s||[]).forEach((s) => { if (SUBJ_SLUG[s]) urls += `<url><loc>${CFG.domain}/branch/${i}/${SUBJ_SLUG[s]}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>`; });
+    (c.s||[]).forEach((s) => { if (SUBJ_SLUG[s]) { urls += `<url><loc>${CFG.domain}/branch/${i}/${SUBJ_SLUG[s]}</loc><changefreq>monthly</changefreq><priority>0.6</priority></url>`; branchLevels(c).forEach((lv)=>{ urls += `<url><loc>${CFG.domain}/branch/${i}/${SUBJ_SLUG[s]}/${lv}</loc><changefreq>monthly</changefreq><priority>0.5</priority></url>`; }); } });
   });
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -1657,8 +1688,9 @@ export default {
       const parts = p.split("/");
       const idx = parseInt(parts[2], 10);
       const slug = parts[3];
+      const lvl = parts[4];
       if (!isNaN(idx)) {
-        const page = slug ? buildSubjectPage(idx, slug) : buildBranchPage(idx);
+        const page = slug ? buildSubjectPage(idx, slug, lvl) : buildBranchPage(idx);
         if (page) return new Response(page, { headers: H });
       }
     }
