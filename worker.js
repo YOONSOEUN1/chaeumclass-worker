@@ -319,6 +319,7 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
 .bd-tv{font-size:.9rem;color:var(--ink);line-height:1.6;}
 .bd-strength{font-size:.92rem;color:var(--ink);line-height:1.85;white-space:pre-line;}
 .bd-empty{font-size:.9rem;color:var(--faint);}
+.bd-school-note{margin-top:14px;padding:12px 14px;background:var(--cream);border-radius:10px;font-size:.86rem;color:var(--green-soft);font-weight:600;line-height:1.6;}
 .bd-side{position:sticky;top:86px;}
 .bd-card{background:var(--paper);border:1px solid var(--sand);border-radius:var(--r-lg);padding:24px 26px;}
 .gg-wrap{padding:12px 0 6px;border-bottom:1px solid var(--cream);margin-bottom:4px;}
@@ -337,6 +338,12 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
 .bd-srow .bd-sv{font-size:.92rem;font-weight:600;color:var(--green);}
 .bd-cta{display:block;text-align:center;margin-top:16px;padding:14px;background:var(--coral);color:#fff;border-radius:11px;font-weight:800;text-decoration:none;font-size:.96rem;}
 .bd-cta.kakao{background:#FEE500;color:#3A1D1D;margin-top:10px;}
+.bd-cta.bd-tel{background:var(--green);color:#fff;margin-top:10px;}
+.bapply{background:var(--cream);padding:64px 32px;}
+.bf-branch{background:var(--green);color:#fff;border-radius:12px;padding:14px 18px;margin-bottom:22px;font-size:.92rem;}
+.bf-branch strong{color:var(--coral-soft);}
+.bf-branch span{color:rgba(255,255,255,.7);font-size:.85rem;}
+.fkakao.bf-tel{background:var(--green);color:#fff;}
 @media(max-width:860px){
   .br-grid{grid-template-columns:1fr;}
   .bd-hero{padding:100px 22px 44px;}
@@ -367,13 +374,13 @@ const NAV = `
   <a href="/" class="logo"><span class="dot"></span>${CFG.name}</a>
   <button id="navToggle" onclick="var m=document.getElementById('nm');m.classList.toggle('open');this.textContent=m.classList.contains('open')?'\\u2715':'\\u2630';">\u2630</button>
   <div class="nav-links" id="nm">
-    <a href="#why">학원 소개</a>
-    <a href="#process">코칭 시스템</a>
-    <a href="#subjects">과목</a>
-    <a href="#grade">학년별</a>
-    <a href="#reviews">후기</a>
-    <a href="#branches">지점 안내</a>
-    <a href="#apply" class="nav-cta">상담 신청</a>
+    <a href="/#why">학원 소개</a>
+    <a href="/#process">코칭 시스템</a>
+    <a href="/#subjects">과목</a>
+    <a href="/#grade">학년별</a>
+    <a href="/#reviews">후기</a>
+    <a href="/#branches">지점 안내</a>
+    <a href="/#apply" class="nav-cta">상담 신청</a>
   </div>
 </nav>`;
 
@@ -884,9 +891,9 @@ function buildSubjectPage(idx, slug){
  ];
  return `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${KW} ${subj} 학원 | ${CFG.name} ${N}</title>
-<meta name="description" content="${KW} ${subj} 학원을 찾는다면. ${KW} 지역 ${subj} 학습 코칭과 내신·시험 대비 안내. ${CFG.name} ${N}.">
-<meta property="og:title" content="${KW} ${subj} 학원 | ${CFG.name} ${N}">
+<title>${KW} ${subj} 학원 | ${esc(branchFull(c))}</title>
+<meta name="description" content="${KW} ${subj} 학원을 찾는다면. ${KW} 지역 ${subj} 학습 코칭과 내신·시험 대비 안내. ${esc(branchFull(c))}.">
+<meta property="og:title" content="${KW} ${subj} 학원 | ${esc(branchFull(c))}">
 <meta property="og:url" content="${CFG.domain}/branch/${idx}/${slug}">
 ${STYLE}
 </head><body>
@@ -902,8 +909,8 @@ ${NAV}
 <section class="bd-body"><div class="inner">
   ${paras.map(p=>'<div class="bd-block"><p class="bd-p">'+p+'</p></div>').join("")}
   <div class="bd-block" style="text-align:center;">
-    <a href="/#apply" class="bd-cta" style="display:inline-block;max-width:320px;">${KW} ${subj} 상담 신청 →</a>
-    <a href="${CFG.kakaoUrl}" target="_blank" rel="noopener" class="bd-cta kakao" style="display:inline-block;max-width:320px;">💬 카카오톡 문의</a>
+    <a href="/branch/${idx}#branch-apply" class="bd-cta" style="display:inline-block;max-width:320px;">${KW} ${subj} 상담 신청 →</a>
+    <a href="tel:${CFG.phoneTel}" class="bd-cta bd-tel" style="display:inline-block;max-width:320px;">📞 전화 상담 ${CFG.phone}</a>
   </div>
   </div></section>
 ${areaSubjectCards(c, idx, subj)}
@@ -959,7 +966,7 @@ function branchMapBlock(c, mapsLink){
 function branchMapScript(c){
   if(!CFG.kakaoMapKey) return "";
   const addrJson=JSON.stringify(cleanAddr(c.a));
-  const nameJson=JSON.stringify(c.n);
+  const nameJson=JSON.stringify(branchBrand(c));
   const cityJson=JSON.stringify(c.p+" "+c.c+" "+c.n);
   return `<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=${CFG.kakaoMapKey}&autoload=false&libraries=services"></script>
 <script>
@@ -1037,6 +1044,92 @@ function gradeGrid(c){
  return '<div class="gg-wrap"><div class="gg-title">📚 수강 가능 과목 · 학년</div>'+rows+'</div>';
 }
 
+/* 지점별 실제 프랜차이즈 브랜드명 (지도 라벨용) */
+function branchBrand(c){
+ const t=(c.n||"")+" "+(c.a||"");
+ if(/모두오름|\(모두\)/.test(t)) return "모두오름학습코칭";
+ if(/글로리드|\(글로리드\)/.test(t)) return "글로리드학습코칭";
+ if(/더블유플러스|\(W\+\)|W\+/.test(t)) return "더블유플러스학원";
+ return "와와학습코칭학원";
+}
+/* 괄호 브랜드표시 제거한 지점명 (예: "목감점(모두)" → "목감점") */
+function branchName(c){ return (c.n||"").replace(/\s*\((모두|W\+|글로리드)\)\s*/g,"").trim(); }
+/* 제목용 짧은 브랜드 (학원/학습코칭 접미 제거) */
+function branchBrandShort(c){ const b=branchBrand(c); if(/학원$/.test(b)) return b.slice(0,-2); if(/학습코칭$/.test(b)) return b.slice(0,-4); return b; }
+/* 전체 표기 (브랜드 + 지점명) */
+function branchFull(c){ return branchBrand(c)+" "+branchName(c); }
+
+/* 지점별 상담 신청 폼 (제출 시 내 메일로 발송, 지점명 포함) */
+function branchApplyForm(c){
+ const grades=["초1","초2","초3","초4","초5","초6","중1","중2","중3","고1","고2","고3"];
+ const subs=(c.s&&c.s.length? c.s : ["국어","영어","수학","과학","사회"]);
+ const gChips=grades.map(g=>'<button type="button" class="chip" onclick="btog(this)">'+g+'</button>').join("");
+ const sChips=subs.map(s=>'<button type="button" class="chip" onclick="btog(this)">'+(SUBJ_EMOJI[s]||"")+" "+s+'</button>').join("")+'<button type="button" class="chip" onclick="btog(this)">전과목</button>';
+ const branchLabel = branchFull(c);
+ return `
+<section id="branch-apply" class="bapply">
+  <div class="inner">
+    <div class="head-center">
+      <span class="eyebrow">Apply</span>
+      <h2 class="title">${esc(c.n)} <span class="hl">상담 신청</span></h2>
+      <p class="lead">${esc(areaKeyword(c))} 학원 상담을 남겨 주시면 빠르게 연락드립니다.</p>
+    </div>
+    <div class="form-card">
+      <div class="bf-branch">📍 신청 지점 · <strong>${esc(branchLabel)}</strong> <span>(${esc(c.p)} ${esc(c.c)})</span></div>
+      <div class="fgroup">
+        <label class="flabel">🎓 자녀 학년 <span class="opt">(복수 선택 가능)</span></label>
+        <div class="chips" data-kind="grade">${gChips}</div>
+      </div>
+      <div class="fgroup">
+        <label class="flabel">📚 희망 과목 <span class="opt">(복수 선택 가능)</span></label>
+        <div class="chips" data-kind="subject">${sChips}</div>
+      </div>
+      <div class="fgroup frow">
+        <div><label class="flabel">🧑‍🎓 학생 이름</label><input class="finput" id="bfName" placeholder="학생 이름"></div>
+        <div><label class="flabel">📱 연락처</label><input class="finput" id="bfContact" placeholder="010-0000-0000"></div>
+      </div>
+      <div class="fgroup">
+        <label class="flabel">🏫 학생 학교 <span class="opt">(선택)</span></label>
+        <input class="finput" id="bfSchool" placeholder="예) ○○중학교">
+      </div>
+      <div class="fgroup">
+        <label class="flabel">💬 문의 사항 <span class="opt">(선택)</span></label>
+        <textarea class="finput" id="bfMsg" rows="3" placeholder="추가로 전달하실 내용이 있으면 자유롭게 적어주세요" style="resize:vertical;"></textarea>
+      </div>
+      <div class="fcheck">
+        <input type="checkbox" id="bfAgree">
+        <label for="bfAgree">본인은 만 14세 이상이며, 개인정보 수집 및 이용에 동의합니다. (필수)</label>
+      </div>
+      <button class="fsubmit" id="bfSubmit" onclick="bsubmit()">📝 상담 신청하기</button>
+      <a href="tel:${CFG.phoneTel}" class="fkakao bf-tel">📞 전화 상담 ${CFG.phone}</a>
+    </div>
+  </div>
+</section>
+<script>
+function btog(b){b.classList.toggle('on');}
+function bpick(k){return [].slice.call(document.querySelectorAll('#branch-apply .chips[data-kind="'+k+'"] .chip.on')).map(function(b){return b.textContent.trim();}).join(', ')||'미선택';}
+async function bsubmit(){
+  var name=document.getElementById('bfName').value.trim();
+  var contact=document.getElementById('bfContact').value.trim();
+  var school=document.getElementById('bfSchool').value.trim();
+  var msg=document.getElementById('bfMsg').value.trim();
+  if(!name){alert('학생 이름을 입력해 주세요.');return;}
+  if(!contact){alert('연락처를 입력해 주세요.');return;}
+  if(!document.getElementById('bfAgree').checked){alert('개인정보 수집 및 이용에 동의해 주세요.');return;}
+  var btn=document.getElementById('bfSubmit');btn.disabled=true;btn.textContent='전송 중...';
+  try{
+    var res=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      name:name,contact:contact,school:school,message:msg,grade:bpick('grade'),subject:bpick('subject'),
+      branch:${JSON.stringify(branchLabel)},source:${JSON.stringify(c.n+" 지점페이지")}
+    })});
+    var r=await res.json();
+    if(r.ok){alert('상담 신청이 완료되었습니다!\\n빠르게 연락드리겠습니다.');btn.disabled=false;btn.textContent='📝 상담 신청하기';}
+    else{throw new Error(r.error||'전송 실패');}
+  }catch(e){alert('전송 중 오류가 발생했습니다.\\n전화(${CFG.phone})로 문의해 주세요.');btn.disabled=false;btn.textContent='📝 상담 신청하기';}
+}
+</script>`;
+}
+
 function buildBranchPage(idx){
   const c = CENTERS[idx];
   if(!c) return null;
@@ -1054,9 +1147,9 @@ function buildBranchPage(idx){
 
   return `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${KW} 학원 | 개별지도 와와학습코칭 ${esc(c.n)}</title>
-<meta name="description" content="${KW} 학원 - ${esc(c.p)} ${esc(c.c)} 개별지도 와와학습코칭 ${esc(c.n)}. 초·중·고 ${esc((c.s||[]).join('·'))} ${esc(c.gr)} 맞춤 지도. ${addr}">
-<meta property="og:title" content="${KW} 학원 | 개별지도 와와학습코칭 ${esc(c.n)}">
+<title>${KW} 학원 | 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}</title>
+<meta name="description" content="${KW} 학원 - ${esc(c.p)} ${esc(c.c)} 개별지도 ${esc(branchFull(c))}. 초·중·고 ${esc((c.s||[]).join('·'))} ${esc(c.gr)} 맞춤 지도. ${addr}">
+<meta property="og:title" content="${KW} 학원 | 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}">
 <meta property="og:description" content="${esc(c.p)} ${esc(c.c)} ${KW} · 초·중·고 개별지도 학습코칭">
 <meta property="og:url" content="${CFG.domain}/branch/${idx}">
 ${STYLE}
@@ -1066,8 +1159,8 @@ ${NAV}
   <div class="inner">
     <div class="art-crumb"><a href="/">홈</a> › <a href="/#branches">지점 안내</a> › ${KW} 학원</div>
     <span class="art-badge">🏫 학원 안내</span>
-    <h1 class="art-title">${KW} 학원 <span class="sub">| 개별지도 와와학습코칭 ${esc(c.n)}</span></h1>
-    <div class="art-by"><span>✏️ ${CFG.name} ${esc(c.n)}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)}</span>${today?'<span class="by-line"></span><span>📅 '+today+'</span>':''}</div>
+    <h1 class="art-title">${KW} 학원 <span class="sub">| 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}</span></h1>
+    <div class="art-by"><span>✏️ ${esc(branchFull(c))}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)}</span>${today?'<span class="by-line"></span><span>📅 '+today+'</span>':''}</div>
     <p class="art-lead">${lead}</p>
     <div class="art-thumb" style="${thumbBg(strHash(c.n+c.a))}">
       <div class="art-thumb-inner">
@@ -1090,6 +1183,7 @@ ${NAV}
       <div class="bd-block">
         <h2 class="bd-h2">🏫 인근 타깃 학교</h2>
         ${tgt}
+        <p class="bd-school-note">📌 위에 없는 학교도 문의 주시면 수업 가능합니다. 편하게 상담 남겨 주세요.</p>
       </div>
       <div class="bd-block">
         <h2 class="bd-h2">⭐ 이 지점의 강점</h2>
@@ -1101,8 +1195,8 @@ ${NAV}
         <div class="bd-srow"><span class="bd-sk">운영 시간</span><span class="bd-sv">${esc(c.ot)||'상담 시 안내'}</span></div>
         <div class="bd-srow"><span class="bd-sk">주말 수업</span><span class="bd-sv">${weekend}</span></div>
         ${gradeGrid(c)}
-        <a href="/#apply" class="bd-cta">이 지점 상담 신청 →</a>
-        <a href="${CFG.kakaoUrl}" target="_blank" rel="noopener" class="bd-cta kakao">💬 카카오톡 문의</a>
+        <a href="#branch-apply" class="bd-cta">이 지점 상담 신청 →</a>
+        <a href="tel:${CFG.phoneTel}" class="bd-cta bd-tel">📞 전화 상담</a>
       </div>
     </aside>
   </div>
@@ -1123,6 +1217,7 @@ ${NAV}
   ${branchReviewsHtml(c, idx)}
 </section>
 ${branchAreaButtons(c, idx)}
+${branchApplyForm(c)}
 ${FOOTER}
 ${FLOATING}
 ${branchMapScript(c)}
@@ -1485,7 +1580,7 @@ async function handleContact(req, env) {
   const J = { "Content-Type": "application/json" };
   try {
     const d = await req.json();
-    const { name, contact, school, message, grade, subject, source } = d;
+    const { name, contact, school, message, grade, subject, source, branch } = d;
     const html = `
       <div style="font-family:'Apple SD Gothic Neo',sans-serif;max-width:600px;margin:0 auto;background:#F8F6F1;border-radius:12px;overflow:hidden;">
         <div style="background:linear-gradient(135deg,#1C5C49,#0C2B23);padding:28px 32px;">
@@ -1494,6 +1589,7 @@ async function handleContact(req, env) {
         </div>
         <div style="padding:28px 32px;background:#fff;">
           <table style="width:100%;border-collapse:collapse;">
+            <tr><td style="padding:10px 0;border-bottom:1px solid #eee;color:#888;font-size:13px;width:100px;">신청 지점</td><td style="padding:10px 0;border-bottom:1px solid #eee;font-weight:800;color:#E1623D;">${branch || source || '홈페이지'}</td></tr>
             <tr><td style="padding:10px 0;border-bottom:1px solid #eee;color:#888;font-size:13px;width:100px;">학생 이름</td><td style="padding:10px 0;border-bottom:1px solid #eee;font-weight:700;color:#123F33;">${name || '-'}</td></tr>
             <tr><td style="padding:10px 0;border-bottom:1px solid #eee;color:#888;font-size:13px;">연락처</td><td style="padding:10px 0;border-bottom:1px solid #eee;font-weight:700;color:#123F33;">${contact || '-'}</td></tr>
             <tr><td style="padding:10px 0;border-bottom:1px solid #eee;color:#888;font-size:13px;">학교</td><td style="padding:10px 0;border-bottom:1px solid #eee;color:#123F33;">${school || '-'}</td></tr>
@@ -1515,7 +1611,7 @@ async function handleContact(req, env) {
       body: JSON.stringify({
         from: CFG.mailFrom,
         to: CFG.mailTo,
-        subject: "📝 [" + CFG.name + "] 새 상담 신청 - " + (name || "이름없음") + " (" + (grade || "") + ")",
+        subject: "📝 [" + CFG.name + "] 새 상담 신청 - " + (branch ? branch + " · " : "") + (name || "이름없음") + " (" + (grade || "") + ")",
         html
       })
     });
