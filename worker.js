@@ -29,6 +29,7 @@ const CFG = {
 /* ── 디자인 토큰 (채움클래스 전용) ──
    딥 포레스트 그린 + 코랄 포인트 + 웜 화이트 / 헤드라인 명조 */
 const STYLE = `
+<meta name="naver-site-verification" content="a46d112f15e40f9c5dc30622c3bc6f8ba2cfd394" />
 <link rel="icon" type="image/png" href="${CFG.favicon}">
 <link rel="apple-touch-icon" href="${CFG.favicon}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
