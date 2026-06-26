@@ -2366,13 +2366,16 @@ ${items}
 </channel></rss>`;
 }
 
-/* ── IndexNow ──────────────────────────────────────────────
-   Bing/Yandex/Seznam 등이 지원하는 즉시 색인 프로토콜.
-   키 파일을 도메인 루트에 두고, /api/indexnow 호출 시 sitemap의 모든 URL을 IndexNow API로 ping.
+/* ── 네이버 IndexNow 설정 ───────────────────────────────
+   키 파일: https://chaeumclass.com/{INDEXNOW_KEY}.txt
+   전체 색인 요청: https://chaeumclass.com/api/indexnow-submit
+   관리자 핑(페이지별): https://chaeumclass.com/admin/indexnow-ping?token={INDEXNOW_ADMIN_TOKEN}&page=1
 */
-const INDEXNOW_KEY = "d1bb6e9d86e9289dcbee7b4197c71a7d";
+const INDEXNOW_KEY = "0c2a0476a530f2dcd776f1540cb88c20";
+const INDEXNOW_ADMIN_TOKEN = "9e6ab68eb169a86442b44c47";
+const SITE_HOST = "chaeumclass.com";
 
-function collectAllUrls() {
+function buildAllSiteUrls() {
   const urls = [`${CFG.domain}/`];
   CENTERS.forEach((c, i) => {
     urls.push(`${CFG.domain}/branch/${i}`);
@@ -2386,30 +2389,25 @@ function collectAllUrls() {
   return urls;
 }
 
-async function pingIndexNow() {
-  const host = CFG.domain.replace(/^https?:\/\//, "");
-  const urlList = collectAllUrls();
-  const body = {
-    host: host,
+async function submitIndexNowChunk(urlList) {
+  const body = JSON.stringify({
+    host: SITE_HOST,
     key: INDEXNOW_KEY,
-    keyLocation: `${CFG.domain}/${INDEXNOW_KEY}.txt`,
+    keyLocation: "https://" + SITE_HOST + "/" + INDEXNOW_KEY + ".txt",
     urlList: urlList
-  };
-  const results = [];
-  // Bing IndexNow 엔드포인트(주요 검색엔진이 공유)
-  for (const ep of ["https://api.indexnow.org/IndexNow", "https://www.bing.com/IndexNow", "https://yandex.com/indexnow"]) {
-    try {
-      const r = await fetch(ep, {
-        method: "POST",
-        headers: { "Content-Type": "application/json; charset=utf-8" },
-        body: JSON.stringify(body)
-      });
-      results.push({ endpoint: ep, status: r.status });
-    } catch (e) {
-      results.push({ endpoint: ep, error: e.message });
-    }
-  }
-  return { count: urlList.length, results };
+  });
+  // 네이버 + Bing + Yandex + IndexNow.org 동시 제출
+  let naverStatus = 0;
+  try {
+    const resp = await fetch("https://searchadvisor.naver.com/indexnow", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: body
+    });
+    naverStatus = resp.status;
+  } catch (e) { naverStatus = -1; }
+  try { await fetch("https://www.bing.com/indexnow", { method: "POST", headers: { "Content-Type": "application/json" }, body: body }); } catch(e){}
+  try { await fetch("https://yandex.com/indexnow", { method: "POST", headers: { "Content-Type": "application/json" }, body: body }); } catch(e){}
+  try { await fetch("https://api.indexnow.org/indexnow", { method: "POST", headers: { "Content-Type": "application/json" }, body: body }); } catch(e){}
+  return { status: naverStatus };
 }
 
 export default {
@@ -2419,14 +2417,101 @@ export default {
     const H = { "Content-Type": "text/html;charset=utf-8" };
 
     if (p === "/api/contact" && req.method === "POST") return handleContact(req, env);
-    if (p === "/api/indexnow") {
-      const result = await pingIndexNow();
-      return new Response(JSON.stringify(result, null, 2), { headers: { "Content-Type": "application/json" } });
+
+    // ── IndexNow: 전체 색인 제출 (4개 엔드포인트 × 배치) ──
+    if (p === "/api/indexnow-submit") {
+      try {
+        const allUrls = buildAllSiteUrls();
+        const BATCH_SIZE = 10000;
+        const totalBatches = Math.ceil(allUrls.length / BATCH_SIZE);
+        const endpoints = ["https://api.indexnow.org/indexnow","https://www.bing.com/indexnow","https://yandex.com/indexnow","https://searchadvisor.naver.com/indexnow"];
+        const allPromises = [];
+        for (let i = 0; i < totalBatches; i++) {
+          const batch = allUrls.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+          const body = JSON.stringify({host:SITE_HOST,key:INDEXNOW_KEY,keyLocation:"https://"+SITE_HOST+"/"+INDEXNOW_KEY+".txt",urlList:batch});
+          for (const ep of endpoints) {
+            allPromises.push(
+              fetch(ep,{method:"POST",headers:{"Content-Type":"application/json"},body:body})
+                .then(res => ({endpoint:ep,batch:i+1,status:res.status,ok:res.ok}))
+                .catch(e => ({endpoint:ep,batch:i+1,error:e.message}))
+            );
+          }
+        }
+        const allResults = await Promise.all(allPromises);
+        const summary = {};
+        endpoints.forEach(ep => {
+          const epResults = allResults.filter(r => r.endpoint === ep);
+          summary[ep] = {
+            total: epResults.length,
+            ok: epResults.filter(r => r.ok).length,
+            failed: epResults.filter(r => !r.ok).length
+          };
+        });
+        return new Response(JSON.stringify({
+          success: true,
+          submitted: allUrls.length,
+          totalBatches: totalBatches,
+          totalRequests: allPromises.length,
+          summary: summary,
+          message: allUrls.length + "개 URL을 " + totalBatches + "개 배치로 제출했습니다."
+        }, null, 2), { headers: { "Content-Type": "application/json" } });
+      } catch (e) {
+        return new Response(JSON.stringify({success:false, error:e.message}), { headers: { "Content-Type": "application/json" } });
+      }
     }
+
+    // ── IndexNow: 키 검증 파일 (검색엔진이 도메인 소유 확인) ──
+    if (p === "/" + INDEXNOW_KEY + ".txt") {
+      return new Response(INDEXNOW_KEY, {
+        headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=3600" }
+      });
+    }
+
+    // ── IndexNow: 관리자 핑 (페이지별 분할 제출, 네이버 응답 확인용) ──
+    if (p === "/admin/indexnow-ping") {
+      if (url.searchParams.get("token") !== INDEXNOW_ADMIN_TOKEN) {
+        return new Response("Forbidden", { status: 403 });
+      }
+      try {
+        const allUrls = buildAllSiteUrls();
+        const PAGE_SIZE = 500;
+        const totalPages = Math.ceil(allUrls.length / PAGE_SIZE);
+        const pageParam = url.searchParams.get("page");
+        if (!pageParam) {
+          return new Response(JSON.stringify({
+            info: "page 파라미터를 추가하세요. 예: ?token=...&page=1",
+            totalUrls: allUrls.length,
+            totalPages: totalPages,
+            pageSize: PAGE_SIZE,
+            howTo: Array.from({length: totalPages}, function(_,i){return "/admin/indexnow-ping?token=" + INDEXNOW_ADMIN_TOKEN + "&page=" + (i+1);})
+          }, null, 2), { headers: { "Content-Type": "application/json; charset=utf-8" } });
+        }
+        const page = parseInt(pageParam) || 1;
+        const start = (page - 1) * PAGE_SIZE;
+        const chunk = allUrls.slice(start, start + PAGE_SIZE);
+        if (chunk.length === 0) {
+          return new Response(JSON.stringify({ok:false, error:"해당 페이지에 URL이 없습니다. 총 " + totalPages + "페이지"}), { headers: { "Content-Type": "application/json; charset=utf-8" } });
+        }
+        const r = await submitIndexNowChunk(chunk);
+        return new Response(JSON.stringify({
+          ok: r.status === 200 || r.status === 202,
+          page: page,
+          totalPages: totalPages,
+          urlsInPage: chunk.length,
+          totalUrls: allUrls.length,
+          range: (start+1) + "-" + (start+chunk.length),
+          naverStatus: r.status,
+          sampleUrls: chunk.slice(0, 5),
+          nextPage: page < totalPages ? "/admin/indexnow-ping?token=" + INDEXNOW_ADMIN_TOKEN + "&page=" + (page+1) : null
+        }, null, 2), { headers: { "Content-Type": "application/json; charset=utf-8" } });
+      } catch (e) {
+        return new Response(JSON.stringify({ok:false, error:e.message}), { headers: { "Content-Type": "application/json; charset=utf-8" }, status: 500 });
+      }
+    }
+
     if (p === "/robots.txt") return new Response(ROBOTS, { headers: { "Content-Type": "text/plain" } });
     if (p === "/sitemap.xml") return new Response(SITEMAP(), { headers: { "Content-Type": "application/xml" } });
     if (p === "/rss.xml" || p === "/feed" || p === "/rss") return new Response(RSS(), { headers: { "Content-Type": "application/rss+xml; charset=utf-8" } });
-    if (p === `/${INDEXNOW_KEY}.txt`) return new Response(INDEXNOW_KEY, { headers: { "Content-Type": "text/plain" } });
     if (p === "/favicon.ico") return new Response(null, { status: 204 });
 
     if (p.startsWith("/branch/")) {
