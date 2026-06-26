@@ -30,6 +30,7 @@ const CFG = {
    딥 포레스트 그린 + 코랄 포인트 + 웜 화이트 / 헤드라인 명조 */
 const STYLE = `
 <meta name="naver-site-verification" content="a46d112f15e40f9c5dc30622c3bc6f8ba2cfd394" />
+<link rel="alternate" type="application/rss+xml" title="채움클래스 RSS" href="${CFG.domain}/rss.xml">
 <link rel="icon" type="image/png" href="${CFG.favicon}">
 <link rel="apple-touch-icon" href="${CFG.favicon}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2323,7 +2324,8 @@ async function handleContact(req, env) {
 
 const ROBOTS = `User-agent: *
 Allow: /
-Sitemap: ${CFG.domain}/sitemap.xml`;
+Sitemap: ${CFG.domain}/sitemap.xml
+Sitemap: ${CFG.domain}/rss.xml`;
 
 function SITEMAP() {
   let urls = `<url><loc>${CFG.domain}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>`;
@@ -2337,6 +2339,79 @@ ${urls}
 </urlset>`;
 }
 
+/* ── RSS 피드 ─────────────────────────────────────────────
+   채움클래스 전국 지점을 RSS 아이템으로 노출. 네이버·구글 등 RSS 리더와 검색엔진 색인 보조.
+*/
+function RSS() {
+  const esc = (s) => String(s||"").replace(/[<>&'"]/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;","'":"&apos;","\"":"&quot;"}[c]));
+  const now = new Date().toUTCString();
+  let items = "";
+  CENTERS.forEach((c, i) => {
+    const kw = areaKeyword(c);
+    const link = `${CFG.domain}/branch/${i}`;
+    const title = `${c.p} ${c.c} ${kw} 학원 | ${branchFull(c)}`;
+    const desc = `${kw} 일대 ${(c.s||[]).join("·")} 학원. ${c.gr||""} 개별 맞춤 학습코칭.`;
+    items += `<item><title>${esc(title)}</title><link>${link}</link><guid isPermaLink="true">${link}</guid><description>${esc(desc)}</description><pubDate>${now}</pubDate></item>`;
+  });
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+<title>${CFG.name} - 전국 학원 안내</title>
+<link>${CFG.domain}</link>
+<atom:link href="${CFG.domain}/rss.xml" rel="self" type="application/rss+xml"/>
+<description>${CFG.name} 전국 ${CENTERS.length}개 지점의 개별 맞춤 학습코칭 안내</description>
+<language>ko-KR</language>
+<lastBuildDate>${now}</lastBuildDate>
+${items}
+</channel></rss>`;
+}
+
+/* ── IndexNow ──────────────────────────────────────────────
+   Bing/Yandex/Seznam 등이 지원하는 즉시 색인 프로토콜.
+   키 파일을 도메인 루트에 두고, /api/indexnow 호출 시 sitemap의 모든 URL을 IndexNow API로 ping.
+*/
+const INDEXNOW_KEY = "d1bb6e9d86e9289dcbee7b4197c71a7d";
+
+function collectAllUrls() {
+  const urls = [`${CFG.domain}/`];
+  CENTERS.forEach((c, i) => {
+    urls.push(`${CFG.domain}/branch/${i}`);
+    (c.s||[]).forEach((s) => {
+      if (SUBJ_SLUG[s]) {
+        urls.push(`${CFG.domain}/branch/${i}/${SUBJ_SLUG[s]}`);
+        branchLevels(c).forEach((lv) => urls.push(`${CFG.domain}/branch/${i}/${SUBJ_SLUG[s]}/${lv}`));
+      }
+    });
+  });
+  return urls;
+}
+
+async function pingIndexNow() {
+  const host = CFG.domain.replace(/^https?:\/\//, "");
+  const urlList = collectAllUrls();
+  const body = {
+    host: host,
+    key: INDEXNOW_KEY,
+    keyLocation: `${CFG.domain}/${INDEXNOW_KEY}.txt`,
+    urlList: urlList
+  };
+  const results = [];
+  // Bing IndexNow 엔드포인트(주요 검색엔진이 공유)
+  for (const ep of ["https://api.indexnow.org/IndexNow", "https://www.bing.com/IndexNow", "https://yandex.com/indexnow"]) {
+    try {
+      const r = await fetch(ep, {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify(body)
+      });
+      results.push({ endpoint: ep, status: r.status });
+    } catch (e) {
+      results.push({ endpoint: ep, error: e.message });
+    }
+  }
+  return { count: urlList.length, results };
+}
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
@@ -2344,8 +2419,14 @@ export default {
     const H = { "Content-Type": "text/html;charset=utf-8" };
 
     if (p === "/api/contact" && req.method === "POST") return handleContact(req, env);
+    if (p === "/api/indexnow") {
+      const result = await pingIndexNow();
+      return new Response(JSON.stringify(result, null, 2), { headers: { "Content-Type": "application/json" } });
+    }
     if (p === "/robots.txt") return new Response(ROBOTS, { headers: { "Content-Type": "text/plain" } });
     if (p === "/sitemap.xml") return new Response(SITEMAP(), { headers: { "Content-Type": "application/xml" } });
+    if (p === "/rss.xml" || p === "/feed" || p === "/rss") return new Response(RSS(), { headers: { "Content-Type": "application/rss+xml; charset=utf-8" } });
+    if (p === `/${INDEXNOW_KEY}.txt`) return new Response(INDEXNOW_KEY, { headers: { "Content-Type": "text/plain" } });
     if (p === "/favicon.ico") return new Response(null, { status: 204 });
 
     if (p.startsWith("/branch/")) {
