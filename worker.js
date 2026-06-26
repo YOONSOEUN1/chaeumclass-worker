@@ -331,6 +331,10 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
 .art-thumb-inner{position:relative;z-index:1;}
 .art-thumb h2{font-family:'Noto Serif KR',serif;font-size:clamp(1.25rem,3vw,1.9rem);font-weight:900;color:#fff;margin-bottom:14px;text-shadow:0 2px 14px rgba(0,0,0,.45);}
 @media(max-width:860px){.art-head{padding:84px 22px 18px;}.art-thumb{min-height:220px;padding:20px;}}
+/* 학년과목 헤더: 썸네일을 본문 칸(bd-main) 폭에 맞춰 정렬 */
+.art-thumb-row{display:grid;grid-template-columns:1.6fr 1fr;gap:28px;align-items:start;margin-top:22px;}
+.art-thumb-row .art-thumb{margin:0;}
+@media(max-width:860px){.art-thumb-row{grid-template-columns:1fr;}}
 .area-sec{background:var(--cream);padding:56px 32px;}
 .area-head{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
 .area-head .bar{width:5px;height:22px;border-radius:3px;background:var(--coral);}
@@ -1553,10 +1557,12 @@ ${NAV}
     <h1 class="art-title">${esc(c.p)} ${esc(c.c)} ${KW} <span class="sub">${lvPhrase?esc(lvLabel)+" ":""}${subj}학원</span></h1>
     <div class="art-by"><span>✏️ ${esc(branchFull(c))}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)}</span></div>
     <p class="art-lead">${KW} ${lvPhrase}${subj} 학원을 찾으신다면, ${esc(branchFull(c))}이 개별 맞춤 학습코칭으로 도와드립니다. 진단으로 부족한 부분을 찾고 ${lvPhrase}${subj} 실력을 단계별로 채웁니다.</p>
-    <div class="art-thumb" style="${thumbBg(strHash(c.n+slug+(lvl||"")))}">
-      <div class="art-thumb-inner">
-        <h2>${KW} ${lvPhrase}${subj}학원</h2>
-        <div class="bd-chips"><span class="bd-chip">${SUBJ_EMOJI[subj]||""} ${subj}</span>${lvLabel?'<span class="bd-chip light">'+esc(lvLabel)+'</span>':'<span class="bd-chip light">'+esc(c.gr||"초·중·고")+'</span>'}</div>
+    <div class="art-thumb-row">
+      <div class="art-thumb" style="${thumbBg(strHash(c.n+slug+(lvl||"")))}">
+        <div class="art-thumb-inner">
+          <h2>${KW} ${lvPhrase}${subj}학원</h2>
+          <div class="bd-chips"><span class="bd-chip">${SUBJ_EMOJI[subj]||""} ${subj}</span>${lvLabel?'<span class="bd-chip light">'+esc(lvLabel)+'</span>':'<span class="bd-chip light">'+esc(c.gr||"초·중·고")+'</span>'}</div>
+        </div>
       </div>
     </div>
     <a href="/branch/${idx}" class="bd-back" style="display:inline-block;margin-top:18px;color:var(--muted);">← ${N} 지점 안내</a>
