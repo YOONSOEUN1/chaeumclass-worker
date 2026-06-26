@@ -54,6 +54,7 @@ img{max-width:100%;display:block;}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(248,246,241,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--sand);height:66px;display:flex;align-items:center;justify-content:space-between;padding:0 32px;}
 .logo{font-family:'Noto Serif KR',serif;font-size:1.28rem;font-weight:900;color:var(--green);text-decoration:none;letter-spacing:-.5px;display:flex;align-items:center;gap:9px;}
 .logo .dot{width:10px;height:10px;border-radius:3px;background:var(--coral);transform:rotate(45deg);}
+.logo .logo-img{width:28px;height:28px;object-fit:contain;display:block;}
 .nav-links{display:flex;align-items:center;gap:26px;}
 .nav-links a{text-decoration:none;font-size:.9rem;font-weight:600;color:var(--muted);transition:color .2s;white-space:nowrap;}
 .nav-links a:hover{color:var(--green);}
@@ -216,7 +217,8 @@ section{padding:88px 32px;}
 
 /* FOOTER */
 footer{background:var(--green-deep);color:rgba(255,255,255,.5);padding:46px 32px;text-align:center;font-size:.84rem;line-height:2;}
-footer .fbrand{font-family:'Noto Serif KR',serif;font-size:1.2rem;font-weight:900;color:#fff;margin-bottom:8px;}
+footer .fbrand{font-family:'Noto Serif KR',serif;font-size:1.2rem;font-weight:900;color:#fff;margin-bottom:8px;display:inline-flex;align-items:center;gap:8px;}
+footer .fbrand-img{width:28px;height:28px;object-fit:contain;display:block;}
 footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
 
 /* FLOATING */
@@ -441,7 +443,7 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
 
 const NAV = `
 <nav>
-  <a href="/" class="logo"><span class="dot"></span>${CFG.name}</a>
+  <a href="/" class="logo"><img src="${CFG.favicon}" alt="${CFG.name}" class="logo-img">${CFG.name}</a>
   <button id="navToggle" onclick="var m=document.getElementById('nm');m.classList.toggle('open');this.textContent=m.classList.contains('open')?'\\u2715':'\\u2630';">\u2630</button>
   <div class="nav-links" id="nm">
     <a href="/#why">학원 소개</a>
@@ -463,7 +465,7 @@ const FLOATING = `
 
 const FOOTER = `
 <footer>
-  <div class="fbrand">${CFG.name}</div>
+  <div class="fbrand"><img src="${CFG.favicon}" alt="${CFG.name}" class="fbrand-img">${CFG.name}</div>
   <div><a href="tel:${CFG.phoneTel}">\u{1F4DE} ${CFG.phone}</a> &nbsp;·&nbsp; <a href="${CFG.kakaoUrl}" target="_blank" rel="noopener">\u{1F4AC} 카카오톡 문의</a></div>
   <p>전국 200여 개 지점 운영 · 초·중·고 전과목 학습코칭</p>
   <p>© ${CFG.name}. All Rights Reserved.</p>
