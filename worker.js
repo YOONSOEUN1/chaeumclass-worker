@@ -1704,18 +1704,11 @@ kakao.maps.load(function(){
 
 /* 지점/과목 히어로 배경 썸네일 (학습공간 · 지점별 상이 · 이미지 실패 시 초록 배경 유지) */
 function heroImg(seed){
- // 사람 없는 학습공간/책상/도서관 위주 (안정적 CDN). 실패 시 초록 배경으로 대체됨.
- const ids=[
-   "1497633762265-9d179a990aa6","1481627834876-b7833e8f5570","1521587760476-6c12a4b040da",
-   "1509062522246-3755977927d7","1456513080510-7bf3a84b82f8","1519452575417-564c1401ecc0",
-   "1497486751825-1233686d5d80","1531973576160-7125cd663d86","1503676260728-1c00da094a0b",
-   "1488190211105-8b0e65b80b4e","1568667256549-094345857637","1580582932707-520aed937b7b",
-   "1454165804606-c3d57bc86b40","1497032205916-ac775f0649ae","1524995997946-a1c2e315a42f",
-   "1517673132405-a56a62b18caf","1513258496099-48168024aec0","1543002588-bfa74002ed7e",
-   "1499750310107-5fef28a66643","1505373877841-8d25f7d46678"
- ];
+ // 사용자 GitHub에 업로드한 30장(image1.jpg ~ image30.jpg)을 시드 기반으로 순환
+ const base="https://raw.githubusercontent.com/YOONSOEUN1/chaeumclass-worker/main/images/";
  const s=Math.abs(seed|0);
- return "https://images.unsplash.com/photo-"+ids[s%ids.length]+"?w=1280&h=520&fit=crop&crop=entropy&q=70&auto=format";
+ const n=(s%30)+1; // 1~30
+ return base+"image"+n+".jpg";
 }
 function heroBg(seed){
  return "background:linear-gradient(rgba(12,43,35,.72),rgba(12,43,35,.9)),url('"+heroImg(seed)+"') center/cover no-repeat,#0C2B23;";
