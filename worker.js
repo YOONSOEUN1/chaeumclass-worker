@@ -251,7 +251,7 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
   .bd-main > div[style*="border-radius:20px"]{padding:18px 16px!important;border-radius:14px!important;}
   .bd-main h2[style*="font-size:19px"]{font-size:15px!important;padding-left:10px!important;}
   /* 모바일에서 후기 캐러셀 카드 폭 축소 */
-  .rv-card{min-width:240px;max-width:260px;}
+  .rv-wrap .rv-card, .rv-carousel .rv-card{min-width:240px!important;max-width:260px!important;}
   /* 글밥 안 회색 강조 박스도 좁히기 */
   .bd-main div[style*="background:#F8F6F1"]{padding:14px 14px!important;}
   .bd-main div[style*="border:2px solid"]{padding:14px!important;border-width:1px!important;}
@@ -418,8 +418,6 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
   .bd-body{padding:36px 22px 60px;}
   .bd-grid{grid-template-columns:1fr;}
   .bd-side{position:static;}
-  .bd-grid-sub{display:flex;flex-direction:column;}
-  .bd-grid-sub .bd-side{order:-1;margin-bottom:4px;}
 }
 /* BRANCH SEO 콘텐츠 (지도/정보성글/수업료표) */
 .bd-map{width:100%;height:300px;border-radius:var(--r);overflow:hidden;border:1px solid var(--sand);margin-top:6px;}
@@ -1573,7 +1571,7 @@ ${NAV}
   </div>
 </header>
 <section class="bd-body">
-  <div class="inner bd-grid bd-grid-sub">
+  <div class="inner bd-grid">
     <div class="bd-main">
       <div class="bd-block">
         <h2 class="bd-h2">📍 ${KW} ${lvPhrase}${subj} 위치 안내</h2>
@@ -1581,34 +1579,35 @@ ${NAV}
         <p class="bd-reserve">📞 학원 상담은 예약제로 진행됩니다. 방문 전 꼭 <a href="tel:${CFG.phoneTel}">${CFG.phone}</a>로 연락 주세요.</p>
         ${branchMapBlock(c, 'https://map.naver.com/v5/search/'+encodeURIComponent(cleanAddr(c.a)))}
       </div>
-      <div class="bd-block">
-        <h2 class="bd-h2">📚 ${KW} ${lvPhrase}${subj}학원</h2>
-        ${paras.map(p=>'<p class="bd-p" style="margin-bottom:14px;">'+p+'</p>').join("")}
-      </div>
-      ${(function(){
-        var gGrade = lvl? GRADE_LV[lvl] : "";
-        var gSchools = lvl==="elem"? el : lvl==="mid"? mid : lvl==="high"? hi : el.concat(mid,hi);
-        var dongRaw = areaKeyword(c);
-        var ct = genContent(c.p, c.c, dongRaw, gGrade, subj, gSchools);
-        return renderUniqueContent(ct, dongRaw, gGrade, subj, "#1C5C49", c.c, gSchools);
-      })()}
-      <div class="bd-block" style="text-align:center;">
-        <a href="/branch/${idx}#branch-apply" class="bd-cta" style="display:inline-block;max-width:320px;">${KW} ${lvPhrase}${subj} 상담 신청 →</a>
-        <a href="tel:${CFG.phoneTel}" class="bd-cta bd-tel" style="display:inline-block;max-width:320px;">📞 전화 상담 ${CFG.phone}</a>
-      </div>
     </div>
     <aside class="bd-side">
       <div class="bd-card">
         <div class="bd-srow"><span class="bd-sk">운영 시간</span><span class="bd-sv">${esc(c.ot)||'상담 시 안내'}</span></div>
         <div class="bd-srow"><span class="bd-sk">주말 수업</span><span class="bd-sv">${c.we&&!/불가/.test(c.we)?esc(c.we):'평일 집중'}</span></div>
         ${gradeGrid(c)}
-        <a href="/branch/${idx}#branch-apply" class="bd-cta">${N} 상담 신청 →</a>
+        <a href="#branch-apply" class="bd-cta">${N} 상담 신청 →</a>
         <a href="tel:${CFG.phoneTel}" class="bd-cta bd-tel">📞 전화 상담</a>
       </div>
     </aside>
   </div>
 </section>
+<section class="bd-extra" style="background:var(--paper);">
+  <div class="inner">
+    <div class="bd-block">
+      <h2 class="bd-h2">📚 ${KW} ${lvPhrase}${subj}학원</h2>
+      ${paras.map(p=>'<p class="bd-p" style="margin-bottom:14px;">'+p+'</p>').join("")}
+    </div>
+    ${(function(){
+      var gGrade = lvl? GRADE_LV[lvl] : "";
+      var gSchools = lvl==="elem"? el : lvl==="mid"? mid : lvl==="high"? hi : el.concat(mid,hi);
+      var dongRaw = areaKeyword(c);
+      var ct = genContent(c.p, c.c, dongRaw, gGrade, subj, gSchools);
+      return renderUniqueContent(ct, dongRaw, gGrade, subj, "#1C5C49", c.c, gSchools);
+    })()}
+  </div>
+</section>
 ${areaSubjectCards(c, idx, subj)}
+${branchApplyForm(c)}
 ${FOOTER}
 ${FLOATING}
 ${branchMapScript(c)}
