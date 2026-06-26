@@ -311,6 +311,21 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
 .area-ic{width:44px;height:44px;border-radius:12px;background:var(--cream);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:14px;}
 .area-card .ac-title{font-size:1.05rem;font-weight:800;color:var(--green);margin-bottom:8px;}
 .area-card-wrap{display:flex;flex-direction:column;}
+.lv-tabs{display:flex;gap:10px;justify-content:center;margin:8px 0 26px;flex-wrap:wrap;}
+.lv-tab{font-size:.92rem;font-weight:800;padding:10px 22px;border-radius:999px;border:1.5px solid var(--sand);background:var(--paper);color:var(--muted);cursor:pointer;transition:.15s;}
+.lv-tab:hover{border-color:var(--green-soft);color:var(--green);}
+.lv-tab.on.lv-e{background:var(--coral);border-color:var(--coral);color:#fff;}
+.lv-tab.on.lv-m{background:#2E7D63;border-color:#2E7D63;color:#fff;}
+.lv-tab.on.lv-h{background:var(--green);border-color:var(--green);color:#fff;}
+.lv-pane{display:none;}
+.lv-pane.on{display:block;animation:lvfade .25s ease;}
+@keyframes lvfade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+.grade-card{position:relative;}
+.gc-badge{position:absolute;top:14px;left:14px;font-size:.7rem;font-weight:800;padding:3px 10px;border-radius:999px;color:#fff;}
+.gc-badge.lv-e{background:var(--coral);}
+.gc-badge.lv-m{background:#2E7D63;}
+.gc-badge.lv-h{background:var(--green);}
+.grade-card .area-ic{margin-top:14px;}
 .ac-grades{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
 .ac-grade{font-size:.78rem;font-weight:700;background:var(--cream);border:1px solid var(--sand);color:var(--green);padding:6px 11px;border-radius:8px;text-decoration:none;transition:.15s;}
 .ac-grade:hover{background:var(--green);color:#fff;border-color:var(--green);}
@@ -870,21 +885,28 @@ function areaSubjectCards(c, idx, exclude){
  const subjects=(c.s&&c.s.length? c.s : ["국어","영어","수학","과학","사회"]).filter(s=>SUBJ_SLUG[s] && s!==exclude);
  if(!subjects.length) return "";
  const lvls=branchLevels(c);
- const cards=subjects.map(s=>{
-   const card='<a class="area-card" href="/branch/'+idx+'/'+SUBJ_SLUG[s]+'">'+
-     '<div class="area-ic">'+(SUBJ_EMOJI[s]||"")+'</div>'+
-     '<div class="ac-title">'+KW+' '+s+'학원</div>'+
-     '<div class="ac-desc">'+(SUBJ_DESC[s]||"")+'</div>'+
-     '<div class="ac-more">자세히 보기 →</div></a>';
-   const gradeLinks=lvls.length? '<div class="ac-grades">'+lvls.map(lv=>
-       '<a class="ac-grade" href="/branch/'+idx+'/'+SUBJ_SLUG[s]+'/'+lv+'">'+KW+' '+GRADE_LV[lv]+' '+s+'학원</a>').join("")+'</div>' : "";
-   return '<div class="area-card-wrap">'+card+gradeLinks+'</div>';
+ if(!lvls.length) return "";
+ const uid=idx+"_"+(exclude?SUBJ_SLUG[exclude]:"all");
+ const ICON={elem:"🌱",mid:"📘",high:"🔥"};
+ const tabs=lvls.map((lv,i)=>'<button class="lv-tab'+(i===0?' on':'')+' '+lvClass(lv)+'" onclick="lvShow(\''+uid+'\',\''+lv+'\',this)">'+ICON[lv]+' '+GRADE_LV[lv]+'</button>').join("");
+ const panes=lvls.map((lv,i)=>{
+   const cards=subjects.map(s=>
+     '<a class="area-card grade-card" href="/branch/'+idx+'/'+SUBJ_SLUG[s]+'/'+lv+'">'+
+       '<span class="gc-badge '+lvClass(lv)+'">'+GRADE_LV[lv]+'</span>'+
+       '<div class="area-ic">'+(SUBJ_EMOJI[s]||"")+'</div>'+
+       '<div class="ac-title">'+KW+' '+s+'학원</div>'+
+       '<div class="ac-more">자세히 보기 →</div></a>').join("");
+   return '<div class="lv-pane'+(i===0?' on':'')+'" data-uid="'+uid+'" data-lv="'+lv+'"><div class="area-grid">'+cards+'</div></div>';
  }).join("");
  return '<section class="area-sec"><div class="inner">'+
-   '<div class="area-head"><span class="bar"></span><h2 class="area-h2">'+KW+' 과목별 안내</h2></div>'+
-   '<p class="area-sub">관심 과목·학년을 선택하면 '+KW+' 지역 맞춤 학습 안내를 확인하실 수 있습니다.</p>'+
-   '<div class="area-grid">'+cards+'</div></div></section>';
+   '<div class="area-head"><span class="bar"></span><h2 class="area-h2">📍 '+KW+' 맞춤 학원 정보</h2></div>'+
+   '<p class="area-sub">'+esc(c.p)+' '+esc(c.c)+' · '+KW+' 인근 · 학년을 선택하면 과목별 안내가 나옵니다.</p>'+
+   '<div class="lv-tabs" data-uid="'+uid+'">'+tabs+'</div>'+
+   panes+
+   '</div></section>'+
+   '<script>function lvShow(u,lv,btn){document.querySelectorAll(\'.lv-tabs[data-uid="\'+u+\'"] .lv-tab\').forEach(function(b){b.classList.remove(\'on\');});btn.classList.add(\'on\');document.querySelectorAll(\'.lv-pane[data-uid="\'+u+\'"]\').forEach(function(p){p.classList.toggle(\'on\',p.getAttribute(\'data-lv\')===lv);});}</script>';
 }
+function lvClass(lv){ return lv==="elem"?"lv-e":lv==="mid"?"lv-m":"lv-h"; }
 
 /* 지점 하단 '지역+과목' 카드 */
 function branchAreaButtons(c, idx){
@@ -932,7 +954,6 @@ ${NAV}
 </header>
 <section class="bd-body"><div class="inner">
   ${paras.map(p=>'<div class="bd-block"><p class="bd-p">'+p+'</p></div>').join("")}
-  ${lvl?'':lvlLinksRow(c,idx,slug)}
   <div class="bd-block" style="text-align:center;">
     <a href="/branch/${idx}#branch-apply" class="bd-cta" style="display:inline-block;max-width:320px;">${KW} ${lvPhrase}${subj} 상담 신청 →</a>
     <a href="tel:${CFG.phoneTel}" class="bd-cta bd-tel" style="display:inline-block;max-width:320px;">📞 전화 상담 ${CFG.phone}</a>
@@ -1180,9 +1201,9 @@ function buildBranchPage(idx){
 
   return `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${KW} 학원 | 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}</title>
+<title>${esc(c.p)} ${esc(c.c)} ${KW} 학원 | 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}</title>
 <meta name="description" content="${KW} 학원 - ${esc(c.p)} ${esc(c.c)} 개별지도 ${esc(branchFull(c))}. 초·중·고 ${esc((c.s||[]).join('·'))} ${esc(c.gr)} 맞춤 지도. ${addr}">
-<meta property="og:title" content="${KW} 학원 | 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}">
+<meta property="og:title" content="${esc(c.p)} ${esc(c.c)} ${KW} 학원 | 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}">
 <meta property="og:description" content="${esc(c.p)} ${esc(c.c)} ${KW} · 초·중·고 개별지도 학습코칭">
 <meta property="og:url" content="${CFG.domain}/branch/${idx}">
 ${STYLE}
@@ -1192,7 +1213,7 @@ ${NAV}
   <div class="inner">
     <div class="art-crumb"><a href="/">홈</a> › <a href="/#branches">지점 안내</a> › ${KW} 학원</div>
     <span class="art-badge">🏫 학원 안내</span>
-    <h1 class="art-title">${KW} 학원 <span class="sub">| 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}</span></h1>
+    <h1 class="art-title">${esc(c.p)} ${esc(c.c)} ${KW} 학원 <span class="sub">| 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}</span></h1>
     <div class="art-by"><span>✏️ ${esc(branchFull(c))}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)}</span>${today?'<span class="by-line"></span><span>📅 '+today+'</span>':''}</div>
     <p class="art-lead">${lead}</p>
     <div class="art-thumb" style="${thumbBg(strHash(c.n+c.a))}">
