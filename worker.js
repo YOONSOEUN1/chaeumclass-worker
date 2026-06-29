@@ -26,6 +26,30 @@ const CFG = {
   mailTo: ["thdmsdidfl@naver.com"], // [TODO] 받을 이메일 주소
 };
 
+// 4주(28일) 주기로 자동 갱신되는 업데이트 날짜
+// 기준점: 2026년 1월 5일 (월요일) → 매 4주마다 다음 주기 첫날로 표기
+function getUpdateDate(){
+  var now=new Date();
+  var ref=new Date(2026,0,5);
+  var diff=Math.floor((now.getTime()-ref.getTime())/(1000*60*60*24));
+  var cycle=Math.floor(diff/28);
+  var updateDate=new Date(ref.getTime()+cycle*28*24*60*60*1000);
+  var y=updateDate.getFullYear();
+  var m=updateDate.getMonth()+1;
+  var d=updateDate.getDate();
+  var mm=m<10?'0'+m:''+m;
+  var dd=d<10?'0'+d:''+d;
+  return y+'년 '+mm+'월 '+dd+'일';
+}
+function getUpdateDateISO(){
+  var now=new Date();
+  var ref=new Date(2026,0,5);
+  var diff=Math.floor((now.getTime()-ref.getTime())/(1000*60*60*24));
+  var cycle=Math.floor(diff/28);
+  var updateDate=new Date(ref.getTime()+cycle*28*24*60*60*1000);
+  return updateDate.toISOString().split('T')[0];
+}
+
 /* ── 디자인 토큰 (채움클래스 전용) ──
    딥 포레스트 그린 + 코랄 포인트 + 웜 화이트 / 헤드라인 명조 */
 const STYLE = `
@@ -1621,7 +1645,7 @@ ${NAV}
     <div class="art-crumb"><a href="/">홈</a> › <a href="/#branches">지점 안내</a> › <a href="/branch/${idx}">${KW} 학원</a> › ${KW} ${lvPhrase}${subj}학원</div>
     <span class="art-badge">📚 ${lvPhrase}${subj} 안내</span>
     <h1 class="art-title">${esc(c.p)} ${esc(c.c)} ${KW} <span class="sub">${lvPhrase?esc(lvLabel)+" ":""}${subj}학원</span></h1>
-    <div class="art-by"><span>✏️ ${esc(branchFull(c))}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)}</span></div>
+    <div class="art-by"><span>✏️ ${esc(branchFull(c))}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)}</span><span class="by-line"></span><span>📅 ${getUpdateDate()}</span></div>
     <p class="art-lead">${KW} ${lvPhrase}${subj} 학원을 찾으신다면, ${esc(branchFull(c))}이 개별 맞춤 학습코칭으로 도와드립니다. 진단으로 부족한 부분을 찾고 ${lvPhrase}${subj} 실력을 단계별로 채웁니다.</p>
     <div class="art-thumb" style="${thumbBg(strHash(c.n+slug+(lvl||"")))}">
       <div class="art-thumb-inner">
@@ -1739,7 +1763,7 @@ ${NAV}
     <div class="art-crumb"><a href="/">홈</a> › <a href="/#branches">지점 안내</a> › <a href="/branch/${idx}">${KW} 학원</a> › ${esc(schFull)} ${lvPhrase}${subj}학원</div>
     <span class="art-badge">${schoolEmoji(sch)} ${esc(schFull)} ${lvPhrase}${subj} 안내</span>
     <h1 class="art-title">${esc(schFull)} <span class="sub">${lvPhrase?esc(lvLabel)+" ":""}${subj}학원</span></h1>
-    <div class="art-by"><span>✏️ ${esc(branchFull(c))}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)} · ${KW}</span></div>
+    <div class="art-by"><span>✏️ ${esc(branchFull(c))}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)} · ${KW}</span><span class="by-line"></span><span>📅 ${getUpdateDate()}</span></div>
     <p class="art-lead">${esc(schFull)} ${lvPhrase}${subj} 학원을 찾으신다면, ${esc(branchFull(c))}이 학교별 시험 범위와 출제 경향에 맞춘 개별 맞춤 학습코칭으로 도와드립니다.</p>
     <div class="art-thumb" style="${thumbBg(strHash(seedStr))}">
       <div class="art-thumb-inner">
@@ -2018,8 +2042,7 @@ function buildBranchPage(idx){
   const mapBlock = branchMapBlock(c, mapsLink);
   const KW = esc(areaKeyword(c));
   const lead = esc(c.p)+" "+esc(c.c||"")+" "+KW+" 일대 초·중·고 "+esc((c.s&&c.s.length?c.s:["전과목"]).join("·"))+" 개별지도 와와학습코칭. 진단·설계·코칭·관리 4단계로 학생마다 맞춤 관리하는 학습코칭 학원입니다.";
-  let today; try{ today=new Date().toLocaleDateString("ko-KR",{year:"numeric",month:"long",day:"numeric"}); }catch(e){ today=""; }
-
+  
   return `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>${esc(c.p)} ${esc(c.c)} ${KW} 학원 | 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}</title>
@@ -2035,7 +2058,7 @@ ${NAV}
     <div class="art-crumb"><a href="/">홈</a> › <a href="/#branches">지점 안내</a> › ${KW} 학원</div>
     <span class="art-badge">🏫 학원 안내</span>
     <h1 class="art-title">${esc(c.p)} ${esc(c.c)} ${KW} 학원 <span class="sub">| 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}</span></h1>
-    <div class="art-by"><span>✏️ ${esc(branchFull(c))}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)}</span>${today?'<span class="by-line"></span><span>📅 '+today+'</span>':''}</div>
+    <div class="art-by"><span>✏️ ${esc(branchFull(c))}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)}</span><span class="by-line"></span><span>📅 ${getUpdateDate()}</span></div>
     <p class="art-lead">${lead}</p>
     <div class="art-thumb" style="${thumbBg(strHash(c.n+c.a))}">
       <div class="art-thumb-inner">
