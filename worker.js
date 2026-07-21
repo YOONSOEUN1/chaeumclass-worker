@@ -456,6 +456,17 @@ footer a{color:var(--coral-soft);text-decoration:none;font-weight:600;}
 .bd-edu-row + .bd-edu-row{border-top:1px dashed var(--sand);}
 .bd-edu-label{flex:0 0 96px;color:var(--muted);font-weight:600;}
 .bd-edu-value{flex:1;color:var(--ink);font-weight:500;word-break:keep-all;}
+.bd-tuit{margin-top:20px;padding:18px 20px;background:#fff;border:1px solid var(--sand);border-radius:var(--r);}
+.bd-tuit-cap{font-size:.95rem;font-weight:800;color:var(--green-deep);margin-bottom:12px;letter-spacing:-0.01em;}
+.bd-tuit-grp{display:inline-block;font-size:.78rem;font-weight:600;color:var(--muted);margin-left:4px;}
+.bd-tuit-tbl{width:100%;border-collapse:collapse;font-size:.88rem;}
+.bd-tuit-tbl thead th{background:var(--cream);color:var(--green-deep);font-weight:700;padding:9px 6px;border-bottom:2px solid var(--sand);text-align:center;}
+.bd-tuit-tbl thead th:first-child{width:22%;}
+.bd-tuit-tbl tbody td{padding:9px 6px;border-bottom:1px solid var(--sand);text-align:center;color:var(--ink);}
+.bd-tuit-tbl tbody td:first-child{background:var(--cream);font-weight:700;color:var(--green);}
+.bd-tuit-tbl tbody tr:last-child td{border-bottom:none;}
+.bd-tuit-note{margin-top:10px;font-size:.78rem;color:var(--faint);line-height:1.55;}
+@media(max-width:480px){ .bd-tuit-tbl{font-size:.82rem;} .bd-tuit-tbl thead th, .bd-tuit-tbl tbody td{padding:7px 4px;} }
 .kmap-label{position:relative;background:var(--green);color:#fff;padding:6px 12px;border-radius:8px;font-size:.8rem;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.25);}
 .kmap-label::after{content:"";position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid var(--green);}
 .bd-h3{font-size:.98rem;font-weight:800;color:var(--green);margin-bottom:8px;}
@@ -556,6 +567,61 @@ const TUITION_HTML = `
 <tr><td>주 2회</td><td>260,000</td><td>282,000</td><td>325,000</td></tr>
 <tr><td>주 3회</td><td>380,000</td><td>412,000</td><td>475,000</td></tr></table>
 <p class="tuit-note">* 수업료는 지역·회수에 따라 차이가 있습니다. 정확한 금액은 상담 시 안내해 드립니다.</p>`;
+
+/* ── 지점별 수강료 (홈 요금표 재활용) ── */
+const TUITION_DATA = {
+  A: { caption: "서울 · 위례 · 미금 · 영통 · 동탄호수 · 동탄목동", rows: [
+    ["주 3회", "230,000", "247,000", "280,000"],
+    ["주 4회", "300,000", "322,000", "365,000"],
+    ["주 5회", "370,000", "397,000", "450,000"]
+  ]},
+  B: { caption: "그 외 지점", rows: [
+    ["주 3회", "200,000", "217,000", "250,000"],
+    ["주 4회", "260,000", "282,000", "325,000"],
+    ["주 5회", "320,000", "347,000", "400,000"]
+  ]},
+  C: { caption: "송도 · 병점 · 삼산 · 청라", rows: [
+    ["주 1회", "140,000", "152,000", "175,000"],
+    ["주 2회", "260,000", "282,000", "325,000"],
+    ["주 3회", "380,000", "412,000", "475,000"]
+  ]}
+};
+function branchTuitionGroup(c){
+  var n = c.n;
+  if (["송도점","송도점(W+)","병점점","삼산점","청라점"].indexOf(n) >= 0) return "C";
+  if (c.p === "서울") return "A";
+  var aList = ["위례점","위례창곡점","송파위례점","미금점","영통점","영통구청점","동탄호수점","동탄목동점"];
+  if (aList.indexOf(n) >= 0) return "A";
+  return "B";
+}
+function branchTuitionBlock(c){
+  var g = branchTuitionGroup(c);
+  var d = TUITION_DATA[g];
+  var rows = d.rows.map(function(r){
+    return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td><td>'+r[3]+'</td></tr>';
+  }).join('');
+  return '<div class="bd-tuit">'+
+    '<div class="bd-tuit-cap">💰 '+esc(c.n)+' 수강료 안내 <span class="bd-tuit-grp">('+esc(d.caption)+' 요금)</span></div>'+
+    '<table class="bd-tuit-tbl">'+
+    '<thead><tr><th></th><th>초등</th><th>중등</th><th>고등</th></tr></thead>'+
+    '<tbody>'+rows+'</tbody></table>'+
+    '<p class="bd-tuit-note">* 표시 금액은 월 수강료(원)이며, 학생 상황에 따라 조정될 수 있습니다. 정확한 금액은 상담 시 안내해 드립니다.</p>'+
+    '</div>';
+}
+
+/* ── 지점 타겟 학교 / 강점 블록 (지점상세·학년과목·학교과목 공용) ── */
+function branchTargetsBlock(c){
+  var tgt = [['초등',c.t['초']],['중등',c.t['중']],['고등',c.t['고']]].filter(function(x){return x[1];}).map(function(x){
+    return '<div class="bd-trow"><span class="bd-tk">'+x[0]+'</span><span class="bd-tv">'+esc(x[1])+'</span></div>';
+  }).join('');
+  return '<div class="bd-block"><h2 class="bd-h2">🏫 인근 타겟 학교</h2>'+
+    (tgt || '<p class="bd-empty">상담 시 안내해 드립니다.</p>')+
+    '<p class="bd-school-note">📌 현재 재학 중인 학교로 문의 주시면 수업 가능합니다. 편하게 상담 남겨 주세요.</p></div>';
+}
+function branchStrengthBlockHTML(c){
+  var s = c.st ? '<p class="bd-strength">'+esc(c.st)+'</p>' : '<p class="bd-empty">방문 상담 시 자세히 안내해 드립니다.</p>';
+  return '<div class="bd-block"><h2 class="bd-h2">⭐ 이 지점의 강점</h2>'+s+'</div>';
+}
 
 function targetSummary(c){
   const t=c.t||{};
@@ -1671,6 +1737,12 @@ ${NAV}
         <p class="bd-reserve">📞 학원 상담은 예약제로 진행됩니다. 방문 전 꼭 <a href="tel:${CFG.phoneTel}">${CFG.phone}</a>로 연락 주세요.</p>
         ${branchMapBlock(c, 'https://map.naver.com/v5/search/'+encodeURIComponent(cleanAddr(c.a)))}
       </div>
+      ${branchTargetsBlock(c)}
+      ${branchStrengthBlockHTML(c)}
+      <div class="bd-block">
+        <h2 class="bd-h2">💰 수강료 안내</h2>
+        ${branchTuitionBlock(c)}
+      </div>
     </div>
     <aside class="bd-side">
       <div class="bd-card">
@@ -1788,6 +1860,12 @@ ${NAV}
         <p class="bd-addr">${esc(cleanAddr(c.a))}</p>
         <p class="bd-reserve">📞 학원 상담은 예약제로 진행됩니다. 방문 전 꼭 <a href="tel:${CFG.phoneTel}">${CFG.phone}</a>로 연락 주세요.</p>
         ${branchMapBlock(c, 'https://map.naver.com/v5/search/'+encodeURIComponent(cleanAddr(c.a)))}
+      </div>
+      ${branchTargetsBlock(c)}
+      ${branchStrengthBlockHTML(c)}
+      <div class="bd-block">
+        <h2 class="bd-h2">💰 수강료 안내</h2>
+        ${branchTuitionBlock(c)}
       </div>
     </div>
     <aside class="bd-side">
@@ -2091,6 +2169,10 @@ ${NAV}
         ${c.g?'<p class="bd-guide">'+esc(c.g)+'</p>':''}
         <p class="bd-reserve">📞 학원 상담은 예약제로 진행됩니다. 방문 전 꼭 <a href="tel:${CFG.phoneTel}">${CFG.phone}</a>로 연락 주세요.</p>
         ${mapBlock}
+      </div>
+      <div class="bd-block">
+        <h2 class="bd-h2">💰 수강료 안내</h2>
+        ${branchTuitionBlock(c)}
       </div>
       <div class="bd-block">
         <h2 class="bd-h2">🏫 인근 타겟 학교</h2>
