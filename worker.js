@@ -26,6 +26,33 @@ const CFG = {
   mailTo: ["thdmsdidfl@naver.com"], // [TODO] 받을 이메일 주소
 };
 
+// 홈페이지 슬라이드 이미지 (images/ 폴더에 아래 파일명으로 업로드)
+// 원하는 만큼 파일명 추가/제거 가능. 확장자 생략 시 .jpg 자동 처리
+const HOME_SLIDES = {
+  plan:   ["plan1.png", "plan2.png", "plan3.png"],       // 📋 학습 관리
+  space:  ["space1.png", "space2.png"],                  // 🎯 태도·생활 관리
+  parent: ["study1.png", "study2.png", "study3.png"]     // 💬 학부모 소통
+};
+function slidesToUrls(arr){
+  var base = "https://raw.githubusercontent.com/YOONSOEUN1/chaeumclass-worker/main/images/";
+  return (arr||[]).map(function(f){
+    var name = /\.(jpg|jpeg|png|webp|gif)$/i.test(f) ? f : f+".jpg";
+    return base + name;
+  });
+}
+function carouselBlock(id, emoji, fallbackText, imgArr){
+  var urls = slidesToUrls(imgArr);
+  if (!urls.length) {
+    return '<div class="m-art"><div><div class="big">'+emoji+'</div><div class="ph">'+fallbackText+'</div></div></div>';
+  }
+  var slides = urls.map(function(u){ return '<img class="cslide" src="'+u+'" alt="" loading="lazy">'; }).join('');
+  var dots = urls.map(function(u,i){ return '<button class="cdot'+(i===0?' active':'')+'" data-i="'+i+'" aria-label="'+(i+1)+'번 이미지"></button>'; }).join('');
+  var controls = urls.length>1
+    ? '<button class="carr cprev" aria-label="이전">‹</button><button class="carr cnext" aria-label="다음">›</button><div class="cdots">'+dots+'</div>'
+    : '';
+  return '<div class="m-art cbox" data-id="'+id+'"><div class="ctrack">'+slides+'</div>'+controls+'</div>';
+}
+
 // 4주(28일) 주기로 자동 갱신되는 업데이트 날짜
 // 기준점: 2026년 1월 5일 (월요일) → 매 4주마다 다음 주기 첫날로 표기
 function getUpdateDate(){
@@ -153,6 +180,16 @@ section{padding:88px 32px;}
 .m-art{border-radius:var(--r);aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg,#1C5C49,#0C2B23);color:rgba(255,255,255,.9);text-align:center;padding:24px;position:relative;overflow:hidden;}
 .m-art .ph{font-size:.8rem;color:rgba(255,255,255,.55);}
 .m-art .big{font-size:3rem;margin-bottom:8px;}
+.m-art.cbox{padding:0;background:#0C2B23;}
+.ctrack{display:flex;width:100%;height:100%;transition:transform .55s cubic-bezier(.4,.0,.2,1);}
+.cslide{flex:0 0 100%;width:100%;height:100%;object-fit:cover;user-select:none;-webkit-user-drag:none;}
+.carr{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.88);border:none;color:var(--green-deep);font-size:1.55rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;z-index:2;box-shadow:0 2px 10px rgba(0,0,0,.18);transition:background .2s;padding:0 0 3px 0;}
+.carr:hover{background:#fff;}
+.cprev{left:12px;}.cnext{right:12px;}
+.cdots{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:7px;z-index:2;}
+.cdot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.45);border:none;cursor:pointer;padding:0;transition:all .3s;}
+.cdot.active{background:#fff;width:22px;border-radius:4px;}
+@media(max-width:600px){ .carr{width:32px;height:32px;font-size:1.3rem;} .cprev{left:8px;} .cnext{right:8px;} }
 
 /* SUBJECTS */
 .subj-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:52px;}
@@ -2310,7 +2347,7 @@ ${NAV}
           <div><span class="ck">✓</span><span>시험 범위 기반 단계별 로드맵</span></div>
         </div>
       </div>
-      <div class="m-art"><div><div class="big">📋</div><div class="ph">[이미지 영역] 학습 관리 사진을 넣어주세요</div></div></div>
+      ${carouselBlock('plan', '📋', '[이미지 영역] 학습 관리 사진을 넣어주세요', HOME_SLIDES.plan)}
     </div>
     <div class="mrow rev">
       <div class="m-txt">
@@ -2323,7 +2360,7 @@ ${NAV}
           <div><span class="ck">✓</span><span>스마트폰·산만함 관리 지원</span></div>
         </div>
       </div>
-      <div class="m-art"><div><div class="big">🎯</div><div class="ph">[이미지 영역] 학원 공간 사진을 넣어주세요</div></div></div>
+      ${carouselBlock('space', '🎯', '[이미지 영역] 태도·생활 관리 사진을 넣어주세요', HOME_SLIDES.space)}
     </div>
     <div class="mrow">
       <div class="m-txt">
@@ -2336,7 +2373,7 @@ ${NAV}
           <div><span class="ck">✓</span><span>성적·태도 변화 기록 공유</span></div>
         </div>
       </div>
-      <div class="m-art"><div><div class="big">💬</div><div class="ph">[이미지 영역] 상담·리포트 사진을 넣어주세요</div></div></div>
+      ${carouselBlock('parent', '💬', '[이미지 영역] 학부모 소통 사진을 넣어주세요', HOME_SLIDES.parent)}
     </div>
   </div>
 </section>
@@ -2566,6 +2603,30 @@ async function submitForm(){
 function countUp(el){var to=parseInt(el.getAttribute('data-to'));var v=el.querySelector('.v');var c=0;var t=setInterval(function(){c++;v.textContent=c;if(c>=to)clearInterval(t);},60);}
 var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){countUp(e.target);io.unobserve(e.target);}});},{threshold:.4});
 document.querySelectorAll('.num[data-to]').forEach(function(el){io.observe(el);});
+// 홈 슬라이드 캐러셀 (자동재생 5초, 도트+화살표, hover시 일시정지)
+document.querySelectorAll('.cbox').forEach(function(box){
+  var track=box.querySelector('.ctrack'),slides=box.querySelectorAll('.cslide'),dots=box.querySelectorAll('.cdot');
+  var prev=box.querySelector('.cprev'),next=box.querySelector('.cnext');
+  var n=slides.length,idx=0,timer=null;
+  if(n<=1) return;
+  function go(i){idx=(i+n)%n;track.style.transform='translateX(-'+(idx*100)+'%)';dots.forEach(function(d,j){d.classList.toggle('active',j===idx);});}
+  function start(){stop();timer=setInterval(function(){go(idx+1);},5000);}
+  function stop(){if(timer){clearInterval(timer);timer=null;}}
+  if(prev)prev.addEventListener('click',function(){go(idx-1);start();});
+  if(next)next.addEventListener('click',function(){go(idx+1);start();});
+  dots.forEach(function(d,j){d.addEventListener('click',function(){go(j);start();});});
+  box.addEventListener('mouseenter',stop);
+  box.addEventListener('mouseleave',start);
+  // 스와이프 (모바일)
+  var sx=0;
+  box.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;stop();},{passive:true});
+  box.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>40){go(dx<0?idx+1:idx-1);}
+    start();
+  });
+  start();
+});
 </script>
 </body></html>`;
 }
