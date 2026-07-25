@@ -2120,6 +2120,14 @@ function branchApplyForm(c){
         <input class="finput" id="bfSchool" placeholder="예) ○○중학교">
       </div>
       <div class="fgroup">
+        <label class="flabel">📍 거주 주소 <span class="opt">(선택)</span></label>
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <input class="finput" id="bfAddr" placeholder="주소 검색 클릭" readonly onclick="if(typeof daum!=='undefined')new daum.Postcode({oncomplete:function(d){document.getElementById('bfAddr').value=d.userSelectedType==='R'?d.roadAddress:d.jibunAddress;document.getElementById('bfAddrD').focus();}}).open();" style="flex:1;cursor:pointer;background:#fff;">
+          <button type="button" onclick="if(typeof daum!=='undefined')new daum.Postcode({oncomplete:function(d){document.getElementById('bfAddr').value=d.userSelectedType==='R'?d.roadAddress:d.jibunAddress;document.getElementById('bfAddrD').focus();}}).open();" style="background:var(--green);color:#fff;border:none;padding:0 22px;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;">검색</button>
+        </div>
+        <input class="finput" id="bfAddrD" placeholder="상세주소 (예: 101동 1001호)">
+      </div>
+      <div class="fgroup">
         <label class="flabel">💬 문의 사항 <span class="opt">(선택)</span></label>
         <textarea class="finput" id="bfMsg" rows="3" placeholder="추가로 전달하실 내용이 있으면 자유롭게 적어주세요" style="resize:vertical;"></textarea>
       </div>
@@ -2132,6 +2140,7 @@ function branchApplyForm(c){
     </div>
   </div>
 </section>
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <script>
 function btog(b){b.classList.toggle('on');}
 function bpick(k){return [].slice.call(document.querySelectorAll('#branch-apply .chips[data-kind="'+k+'"] .chip.on')).map(function(b){return b.textContent.trim();}).join(', ')||'미선택';}
@@ -2139,6 +2148,9 @@ async function bsubmit(){
   var name=document.getElementById('bfName').value.trim();
   var contact=document.getElementById('bfContact').value.trim();
   var school=document.getElementById('bfSchool').value.trim();
+  var addrMain=(document.getElementById('bfAddr')||{value:''}).value.trim();
+  var addrDetail=(document.getElementById('bfAddrD')||{value:''}).value.trim();
+  var address=addrDetail?addrMain+' '+addrDetail:addrMain;
   var msg=document.getElementById('bfMsg').value.trim();
   if(!name){alert('학생 이름을 입력해 주세요.');return;}
   if(!contact){alert('연락처를 입력해 주세요.');return;}
@@ -2146,7 +2158,7 @@ async function bsubmit(){
   var btn=document.getElementById('bfSubmit');btn.disabled=true;btn.textContent='전송 중...';
   try{
     var res=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      name:name,contact:contact,school:school,message:msg,grade:bpick('grade'),subject:bpick('subject'),
+      name:name,contact:contact,school:school,address:address,message:msg,grade:bpick('grade'),subject:bpick('subject'),
       branch:${JSON.stringify(branchLabel)},source:${JSON.stringify(c.n+" 지점페이지")}
     })});
     var r=await res.json();
@@ -2547,6 +2559,14 @@ ${NAV}
       <input class="finput" id="fSchool" placeholder="예) ○○중학교">
     </div>
     <div class="fgroup">
+      <label class="flabel">📍 거주 주소 <span class="opt">(선택)</span></label>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <input class="finput" id="fAddr" placeholder="주소 검색 클릭" readonly onclick="if(typeof daum!=='undefined')new daum.Postcode({oncomplete:function(d){document.getElementById('fAddr').value=d.userSelectedType==='R'?d.roadAddress:d.jibunAddress;document.getElementById('fAddrD').focus();}}).open();" style="flex:1;cursor:pointer;background:#fff;">
+        <button type="button" onclick="if(typeof daum!=='undefined')new daum.Postcode({oncomplete:function(d){document.getElementById('fAddr').value=d.userSelectedType==='R'?d.roadAddress:d.jibunAddress;document.getElementById('fAddrD').focus();}}).open();" style="background:var(--green);color:#fff;border:none;padding:0 22px;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit;">검색</button>
+      </div>
+      <input class="finput" id="fAddrD" placeholder="상세주소 (예: 101동 1001호)">
+    </div>
+    <div class="fgroup">
       <label class="flabel">💬 문의 사항 <span class="opt">(선택)</span></label>
       <textarea class="finput" id="fMsg" rows="3" placeholder="추가로 전달하실 내용이 있으면 자유롭게 적어주세요" style="resize:vertical;"></textarea>
     </div>
@@ -2572,6 +2592,7 @@ ${NAV}
 ${FOOTER}
 ${FLOATING}
 
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <script>
 function tog(b){b.classList.toggle('on');}
 function pick(kind){return [].slice.call(document.querySelectorAll('.chips[data-kind="'+kind+'"] .chip.on')).map(function(b){return b.textContent.trim();}).join(', ')||'미선택';}
@@ -2579,6 +2600,9 @@ async function submitForm(){
   var name=document.getElementById('fName').value.trim();
   var contact=document.getElementById('fContact').value.trim();
   var school=document.getElementById('fSchool').value.trim();
+  var addrMain=(document.getElementById('fAddr')||{value:''}).value.trim();
+  var addrDetail=(document.getElementById('fAddrD')||{value:''}).value.trim();
+  var address=addrDetail?addrMain+' '+addrDetail:addrMain;
   var msg=document.getElementById('fMsg').value.trim();
   var agree=document.getElementById('fAgree').checked;
   if(!name){alert('학생 이름을 입력해 주세요.');return;}
@@ -2588,7 +2612,7 @@ async function submitForm(){
   btn.disabled=true;btn.textContent='전송 중...';
   try{
     var res=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      name:name,contact:contact,school:school,message:msg,
+      name:name,contact:contact,school:school,address:address,message:msg,
       grade:pick('grade'),subject:pick('subject'),source:'채움클래스 홈페이지'
     })});
     var result=await res.json();
@@ -2636,7 +2660,7 @@ async function handleContact(req, env) {
   const J = { "Content-Type": "application/json" };
   try {
     const d = await req.json();
-    const { name, contact, school, message, grade, subject, source, branch } = d;
+    const { name, contact, school, address, message, grade, subject, source, branch } = d;
     const html = `
       <div style="font-family:'Apple SD Gothic Neo',sans-serif;max-width:600px;margin:0 auto;background:#F8F6F1;border-radius:12px;overflow:hidden;">
         <div style="background:linear-gradient(135deg,#1C5C49,#0C2B23);padding:28px 32px;">
@@ -2649,6 +2673,7 @@ async function handleContact(req, env) {
             <tr><td style="padding:10px 0;border-bottom:1px solid #eee;color:#888;font-size:13px;width:100px;">학생 이름</td><td style="padding:10px 0;border-bottom:1px solid #eee;font-weight:700;color:#123F33;">${name || '-'}</td></tr>
             <tr><td style="padding:10px 0;border-bottom:1px solid #eee;color:#888;font-size:13px;">연락처</td><td style="padding:10px 0;border-bottom:1px solid #eee;font-weight:700;color:#123F33;">${contact || '-'}</td></tr>
             <tr><td style="padding:10px 0;border-bottom:1px solid #eee;color:#888;font-size:13px;">학교</td><td style="padding:10px 0;border-bottom:1px solid #eee;color:#123F33;">${school || '-'}</td></tr>
+            <tr><td style="padding:10px 0;border-bottom:1px solid #eee;color:#888;font-size:13px;">거주 주소</td><td style="padding:10px 0;border-bottom:1px solid #eee;color:#123F33;">${address || '-'}</td></tr>
             <tr><td style="padding:10px 0;border-bottom:1px solid #eee;color:#888;font-size:13px;">학년</td><td style="padding:10px 0;border-bottom:1px solid #eee;color:#123F33;">${grade || '-'}</td></tr>
             <tr><td style="padding:10px 0;border-bottom:1px solid #eee;color:#888;font-size:13px;">희망 과목</td><td style="padding:10px 0;border-bottom:1px solid #eee;color:#123F33;">${subject || '-'}</td></tr>
             <tr><td style="padding:10px 0;color:#888;font-size:13px;vertical-align:top;">문의 사항</td><td style="padding:10px 0;color:#123F33;line-height:1.6;">${message || '없음'}</td></tr>
