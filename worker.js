@@ -32,7 +32,7 @@ const CFG = {
 // 예) const CLARITY_ID = "abc123xyz";
 // 비워두면 스크립트가 로드되지 않아 아무 영향 없습니다.
 // ─────────────────────────────────────────────────────────
-const CLARITY_ID = ""; // ← 여기에 Clarity 프로젝트 ID 넣기
+const CLARITY_ID = "xy15hzwfv0"; // ← 여기에 Clarity 프로젝트 ID 넣기
 const CLARITY = CLARITY_ID ? `
 <script type="text/javascript">
 (function(c,l,a,r,i,t,y){
