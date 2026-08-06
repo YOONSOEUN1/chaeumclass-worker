@@ -26,6 +26,22 @@ const CFG = {
   mailTo: ["thdmsdidfl@naver.com"], // [TODO] 받을 이메일 주소
 };
 
+// ─────────────────────────────────────────────────────────
+// Microsoft Clarity (히트맵·세션 녹화)
+// Clarity 관리자 → Setup → Get tracking code에서 프로젝트 ID 복사해서 아래에 붙여넣으세요
+// 예) const CLARITY_ID = "abc123xyz";
+// 비워두면 스크립트가 로드되지 않아 아무 영향 없습니다.
+// ─────────────────────────────────────────────────────────
+const CLARITY_ID = ""; // ← 여기에 Clarity 프로젝트 ID 넣기
+const CLARITY = CLARITY_ID ? `
+<script type="text/javascript">
+(function(c,l,a,r,i,t,y){
+  c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+  t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+  y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+})(window, document, "clarity", "script", "${CLARITY_ID}");
+</script>` : "";
+
 // 홈페이지 슬라이드 이미지 (images/ 폴더에 아래 파일명으로 업로드)
 // 원하는 만큼 파일명 추가/제거 가능. 확장자 생략 시 .jpg 자동 처리
 const HOME_SLIDES = {
@@ -45,7 +61,12 @@ function carouselBlock(id, emoji, fallbackText, imgArr){
   if (!urls.length) {
     return '<div class="m-art"><div><div class="big">'+emoji+'</div><div class="ph">'+fallbackText+'</div></div></div>';
   }
-  var slides = urls.map(function(u){ return '<img class="cslide" src="'+u+'" alt="" loading="lazy">'; }).join('');
+  var altBase = ({
+    plan:   '채움클래스 학습 관리',
+    space:  '채움클래스 태도·생활 관리',
+    parent: '채움클래스 학부모 소통'
+  })[id] || '채움클래스';
+  var slides = urls.map(function(u, i){ return '<img class="cslide" src="'+u+'" alt="'+altBase+' 사진 '+(i+1)+'" loading="lazy">'; }).join('');
   var dots = urls.map(function(u,i){ return '<button class="cdot'+(i===0?' active':'')+'" data-i="'+i+'" aria-label="'+(i+1)+'번 이미지"></button>'; }).join('');
   var controls = urls.length>1
     ? '<button class="carr cprev" aria-label="이전">‹</button><button class="carr cnext" aria-label="다음">›</button><div class="cdots">'+dots+'</div>'
@@ -1747,6 +1768,7 @@ function buildSubjectPage(idx, slug, lvl){
 <meta property="og:title" content="${KW} ${subjFull} | ${esc(branchFull(c))}">
 <meta property="og:url" content="${CFG.domain}${urlPath}">
 ${STYLE}
+${CLARITY}
 </head><body>
 ${NAV}
 <header class="art-head">
@@ -1871,6 +1893,7 @@ function buildSchoolSubjectPage(idx, schoolRaw, slug){
 <meta property="og:title" content="${esc(schFull)} ${subjFull} | ${esc(branchFull(c))}">
 <meta property="og:url" content="${CFG.domain}${urlPath}">
 ${STYLE}
+${CLARITY}
 </head><body>
 ${NAV}
 <header class="art-head">
@@ -2191,6 +2214,7 @@ function buildBranchPage(idx){
 <meta property="og:description" content="${esc(c.p)} ${esc(c.c)} ${KW} · 초·중·고 개별지도 학습코칭">
 <meta property="og:url" content="${CFG.domain}/branch/${idx}">
 ${STYLE}
+${CLARITY}
 </head><body>
 ${NAV}
 <section class="art-head">
@@ -2286,6 +2310,7 @@ function HOME() {
 <meta property="og:description" content="진단·설계·코칭·관리 4단계 맞춤 학습코칭. 초·중·고 전과목 학원수업.">
 <meta property="og:url" content="${CFG.domain}">
 ${STYLE}
+${CLARITY}
 </head><body>
 ${NAV}
 
