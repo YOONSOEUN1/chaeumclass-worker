@@ -694,6 +694,67 @@ function strHash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
 function splitSchools(v){return (v||"").split(/[,/·]/).map(x=>x.trim()).filter(Boolean);}
 
+/* 페이지 h1/title 부제 — 페이지 고유 정보(지점명/학교/과목)를 결합해 완전 유일성 보장 */
+function pickSeeded(seed, arr){ return arr[(mulberry32(seed)() * arr.length) | 0]; }
+function branchSubtitle(c){
+  var brand = c.n;
+  var short = branchBrandShort(c);
+  var kw = areaKeyword(c);
+  var templates = [
+    brand + " · 초·중·고 1:1 맞춤 학습코칭",
+    kw + " 개별지도 전문 · " + brand,
+    brand + "만의 학년·과목별 개별 관리",
+    short + " " + brand + " · 학교별 시험 대비",
+    brand + " · 진단부터 실력 완성까지 밀착 코칭",
+    "초·중·고 전과목 학습코칭 · " + brand,
+    brand + " · 실력을 채우는 개별 학습 관리",
+    "1:1 맞춤 코칭 · " + short + " " + brand,
+    brand + " 코치의 밀착 관리 학습",
+    kw + " 학생을 위한 개별지도 · " + brand,
+    brand + " · 학생 맞춤 커리큘럼 설계",
+    brand + " · 부족한 부분부터 채우는 개별 코칭"
+  ];
+  return pickSeeded(strHash("bd|"+c.n), templates);
+}
+function subjectSubtitle(c, slug, lvl){
+  var subj = ({kor:"국어",eng:"영어",math:"수학",sci:"과학",soc:"사회"})[slug] || slug;
+  var lvName = ({elem:"초등",mid:"중등",high:"고등"})[lvl] || "";
+  var brand = c.n;
+  var kw = areaKeyword(c);
+  var templates = [
+    brand + " · " + lvName + " " + subj + " 1:1 맞춤 학습코칭",
+    brand + "의 " + lvName + " " + subj + " 개별 관리 프로그램",
+    kw + " " + lvName + " " + subj + " · 학교별 시험 대비 · " + brand,
+    brand + " " + lvName + " " + subj + " 진단·설계·완성 코칭",
+    brand + " · " + lvName + " " + subj + " 실력 향상 개별지도",
+    lvName + " " + subj + " 밀착 지도 · " + brand,
+    brand + " 코치의 " + lvName + " " + subj + " 학습 관리",
+    kw + " " + lvName + " " + subj + " 학생 맞춤 코칭 · " + brand,
+    brand + " · " + lvName + " " + subj + " 기초부터 심화까지 단계별",
+    lvName + " " + subj + " 개별 커리큘럼 · " + brand,
+    brand + " · " + lvName + " " + subj + " 부족한 부분부터 채우는 코칭",
+    brand + "의 " + lvName + " " + subj + " 성적 향상 프로그램"
+  ];
+  return pickSeeded(strHash("sj|"+c.n+"|"+slug+"|"+(lvl||"")), templates);
+}
+function schoolSubjSubtitle(c, sch, slug){
+  var subj = ({kor:"국어",eng:"영어",math:"수학",sci:"과학",soc:"사회"})[slug] || slug;
+  var brand = c.n;
+  var templates = [
+    brand + " · " + sch + " 재학생 " + subj + " 맞춤 시험 대비",
+    sch + " " + subj + " 개별지도 · " + brand,
+    brand + "의 " + sch + " 학생 맞춤 " + subj + " 코칭",
+    sch + " 진도 맞춤 " + subj + " 1:1 코칭 · " + brand,
+    brand + " · " + sch + " 재학생 " + subj + " 성적 향상 프로그램",
+    sch + " 시험 범위 완벽 대비 · " + brand + " " + subj,
+    brand + " 코치의 " + sch + " " + subj + " 학습 관리",
+    sch + " 커리큘럼 맞춤 " + subj + " 개별지도 · " + brand,
+    brand + " · " + sch + " 학년별 맞춤 " + subj + " 코칭",
+    sch + " 출제 경향 반영 " + subj + " 밀착 지도 · " + brand
+  ];
+  return pickSeeded(strHash("ss|"+c.n+"|"+sch+"|"+slug), templates);
+}
+
 /* 짧은 술어 조각(≤4어절). 문장은 항상 '지점명/학교명/원장명 + 조각' 구조라 6어절 연속 공유가 발생하지 않음 */
 const FR={
  core:["빈틈을 정확히 채웁니다","약점을 진단해 메웁니다","공부 습관을 잡아 줍니다","스스로 공부하도록 돕습니다","성적과 태도를 함께 봅니다","개념부터 다시 다집니다","오답을 반복해 점검합니다","눈높이에 맞춰 지도합니다","꾸준함을 만들어 줍니다","질문을 즉시 해결합니다","기초를 단단히 세웁니다","학습 방향을 바로잡습니다"],
@@ -1763,7 +1824,7 @@ function buildSubjectPage(idx, slug, lvl){
  const urlPath = "/branch/"+idx+"/"+slug+(lvl?"/"+lvl:"");
  return `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${KW} ${subjFull} | ${esc(branchFull(c))}</title>
+<title>${esc(c.p)} ${esc(c.c)} ${KW} ${lvPhrase?esc(lvLabel)+" ":""}${subj}학원 · ${subjectSubtitle(c,slug,lvl)} | ${esc(branchFull(c))}</title>
 <meta name="description" content="${KW} ${subjFull}을 찾는다면. ${KW} 지역 ${lvPhrase}${subj} 학습 코칭과 내신·시험 대비 안내. ${esc(branchFull(c))}.">
 <meta property="og:title" content="${KW} ${subjFull} | ${esc(branchFull(c))}">
 <meta property="og:url" content="${CFG.domain}${urlPath}">
@@ -1775,7 +1836,7 @@ ${NAV}
   <div class="inner">
     <div class="art-crumb"><a href="/">홈</a> › <a href="/#branches">지점 안내</a> › <a href="/branch/${idx}">${KW} 학원</a> › ${KW} ${lvPhrase}${subj}학원</div>
     <span class="art-badge">📚 ${lvPhrase}${subj} 안내</span>
-    <h1 class="art-title">${esc(c.p)} ${esc(c.c)} ${KW} <span class="sub">${lvPhrase?esc(lvLabel)+" ":""}${subj}학원</span></h1>
+    <h1 class="art-title">${esc(c.p)} ${esc(c.c)} ${KW} ${lvPhrase?esc(lvLabel)+" ":""}${subj}학원 <span class="sub">${subjectSubtitle(c,slug,lvl)}</span></h1>
     <div class="art-by"><span>✏️ ${esc(branchFull(c))}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)}</span><span class="by-line"></span><span>📅 ${getUpdateDate()}</span></div>
     <p class="art-lead">${KW} ${lvPhrase}${subj} 학원을 찾으신다면, ${esc(branchFull(c))}이 개별 맞춤 학습코칭으로 도와드립니다. 진단으로 부족한 부분을 찾고 ${lvPhrase}${subj} 실력을 단계별로 채웁니다.</p>
     <div class="art-thumb" style="${thumbBg(strHash(c.n+slug+(lvl||"")))}">
@@ -1888,7 +1949,7 @@ function buildSchoolSubjectPage(idx, schoolRaw, slug){
  const urlPath = "/branch/"+idx+"/school/"+encodeURIComponent(sch)+"/"+slug;
  return `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${esc(schFull)} ${subjFull} | ${esc(branchFull(c))}</title>
+<title>${esc(schFull)} ${lvPhrase?esc(lvLabel)+" ":""}${subj}학원 · ${schoolSubjSubtitle(c,sch,slug)} | ${esc(branchFull(c))}</title>
 <meta name="description" content="${esc(schFull)} ${subjFull}을 찾는다면. ${esc(schFull)} 학교별 시험 대비, ${lvPhrase}${subj} 학습 코칭. ${esc(branchFull(c))}.">
 <meta property="og:title" content="${esc(schFull)} ${subjFull} | ${esc(branchFull(c))}">
 <meta property="og:url" content="${CFG.domain}${urlPath}">
@@ -1900,7 +1961,7 @@ ${NAV}
   <div class="inner">
     <div class="art-crumb"><a href="/">홈</a> › <a href="/#branches">지점 안내</a> › <a href="/branch/${idx}">${KW} 학원</a> › ${esc(schFull)} ${lvPhrase}${subj}학원</div>
     <span class="art-badge">${schoolEmoji(sch)} ${esc(schFull)} ${lvPhrase}${subj} 안내</span>
-    <h1 class="art-title">${esc(schFull)} <span class="sub">${lvPhrase?esc(lvLabel)+" ":""}${subj}학원</span></h1>
+    <h1 class="art-title">${esc(schFull)} ${lvPhrase?esc(lvLabel)+" ":""}${subj}학원 <span class="sub">${schoolSubjSubtitle(c,sch,slug)}</span></h1>
     <div class="art-by"><span>✏️ ${esc(branchFull(c))}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)} · ${KW}</span><span class="by-line"></span><span>📅 ${getUpdateDate()}</span></div>
     <p class="art-lead">${esc(schFull)} ${lvPhrase}${subj} 학원을 찾으신다면, ${esc(branchFull(c))}이 학교별 시험 범위와 출제 경향에 맞춘 개별 맞춤 학습코칭으로 도와드립니다.</p>
     <div class="art-thumb" style="${thumbBg(strHash(seedStr))}">
@@ -2208,7 +2269,7 @@ function buildBranchPage(idx){
   
   return `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>${esc(c.p)} ${esc(c.c)} ${KW} 학원 | 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}</title>
+<title>${esc(c.p)} ${esc(c.c)} ${KW} 학원 · ${branchSubtitle(c)} | ${esc(branchFull(c))}</title>
 <meta name="description" content="${KW} 학원 - ${esc(c.p)} ${esc(c.c)} 개별지도 ${esc(branchFull(c))}. 초·중·고 ${esc((c.s||[]).join('·'))} ${esc(c.gr)} 맞춤 지도. ${addr}">
 <meta property="og:title" content="${esc(c.p)} ${esc(c.c)} ${KW} 학원 | 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}">
 <meta property="og:description" content="${esc(c.p)} ${esc(c.c)} ${KW} · 초·중·고 개별지도 학습코칭">
@@ -2221,7 +2282,7 @@ ${NAV}
   <div class="inner">
     <div class="art-crumb"><a href="/">홈</a> › <a href="/#branches">지점 안내</a> › ${KW} 학원</div>
     <span class="art-badge">🏫 학원 안내</span>
-    <h1 class="art-title">${esc(c.p)} ${esc(c.c)} ${KW} 학원 <span class="sub">| 개별지도 ${esc(branchBrandShort(c))} ${esc(branchName(c))}</span></h1>
+    <h1 class="art-title">${esc(c.p)} ${esc(c.c)} ${KW} 학원 <span class="sub">${branchSubtitle(c)}</span></h1>
     <div class="art-by"><span>✏️ ${esc(branchFull(c))}</span><span class="by-line"></span><span>📍 ${esc(c.p)} ${esc(c.c)}</span><span class="by-line"></span><span>📅 ${getUpdateDate()}</span></div>
     <p class="art-lead">${lead}</p>
     <div class="art-thumb" style="${thumbBg(strHash(c.n+c.a))}">
