@@ -694,65 +694,115 @@ function strHash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
 function splitSchools(v){return (v||"").split(/[,/·]/).map(x=>x.trim()).filter(Boolean);}
 
-/* 페이지 h1/title 부제 — 페이지 고유 정보(지점명/학교/과목)를 결합해 완전 유일성 보장 */
+/* 페이지 h1/title 부제 — 기본은 지점명 없이, h1이 중복되는 경우에만 뒤에 · 지점명 첨부 */
 function pickSeeded(seed, arr){ return arr[(mulberry32(seed)() * arr.length) | 0]; }
+
+/* [내부] 지점명이 붙지 않은 순수 부제 */
+function _branchSubtitleBase(c){
+  return pickSeeded(strHash("bd|"+c.n), [
+    "초·중·고 1:1 맞춤 학습코칭",
+    "학년·과목별 개별 관리 학습코칭",
+    "진단·설계·완성까지 밀착 코칭",
+    "학교별 시험 대비 개별지도",
+    "초·중·고 전과목 개별 학습코칭",
+    "실력을 채우는 개별 학습 관리",
+    "1:1 맞춤 코칭 · 학생별 커리큘럼",
+    "부족한 부분부터 채우는 개별 지도",
+    "학년별·과목별 개별 커리큘럼 설계",
+    "코치와 함께하는 밀착 관리 학습",
+    "학교별 진도 맞춤 개별 코칭",
+    "학생 맞춤 실력 향상 프로그램",
+    "기초부터 심화까지 단계별 개별지도",
+    "학습 습관부터 성적까지 통합 관리"
+  ]);
+}
+function _subjectSubtitleBase(c, slug, lvl){
+  return pickSeeded(strHash("sj|"+c.n+"|"+slug+"|"+(lvl||"")), [
+    "1:1 맞춤 학습코칭 프로그램",
+    "학교별 시험 대비 개별 관리",
+    "진단부터 실력 완성까지 밀착 코칭",
+    "부족한 부분부터 채우는 개별 지도",
+    "성적 향상 맞춤 개별지도",
+    "학생 맞춤 커리큘럼 설계",
+    "기초부터 심화까지 단계별 지도",
+    "1:1 밀착 지도로 실력 향상",
+    "학습 습관부터 성적까지 통합 관리",
+    "학교 진도 맞춤 개별 코칭",
+    "코치와 함께 성장하는 학습 관리",
+    "학년별 맞춤 개별 커리큘럼",
+    "취약점부터 잡는 밀착 지도",
+    "학생별 진단 후 맞춤 지도"
+  ]);
+}
+function _schoolSubjSubtitleBase(c, sch, slug){
+  return pickSeeded(strHash("ss|"+c.n+"|"+sch+"|"+slug), [
+    "재학생 맞춤 시험 대비 프로그램",
+    "학교 진도 맞춤 개별지도",
+    "재학생 맞춤 1:1 학습코칭",
+    "학교 시험 범위 완벽 대비",
+    "재학생 성적 향상 개별지도",
+    "학년별 맞춤 학습 관리",
+    "학교 커리큘럼 맞춤 개별지도",
+    "출제 경향 반영 맞춤 지도",
+    "학교 진도 맞춰 개별 코칭",
+    "재학생 밀착 관리 프로그램",
+    "학교별 취약점 진단 후 지도",
+    "재학생 맞춤 커리큘럼 설계"
+  ]);
+}
+
+/* [사전 계산 / Lazy] 지점명 없이 렌더링했을 때 중복되는 h1의 키 집합 
+   첫 페이지 렌더링 시 1회 계산 후 캐시. 이후 조회만. */
+let _h1DupeCache = null;
+function _getH1DupeKeys(){
+  if(_h1DupeCache) return _h1DupeCache;
+  var SLUGS = ["kor","eng","math","sci","soc"];
+  var SUBJ_KO = {kor:"국어",eng:"영어",math:"수학",sci:"과학",soc:"사회"};
+  var LEVELS = ["elem","mid","high"];
+  var LVL_KO = {elem:"초등",mid:"중등",high:"고등"};
+  var count = Object.create(null);
+  var bump = function(k){ count[k] = (count[k]||0) + 1; };
+  CENTERS.forEach(function(c){
+    bump("bd|"+c.p+"|"+c.c+"|"+areaKeyword(c)+"|"+_branchSubtitleBase(c));
+    SLUGS.forEach(function(slug){
+      LEVELS.forEach(function(lv){
+        bump("sj|"+c.p+"|"+c.c+"|"+areaKeyword(c)+"|"+LVL_KO[lv]+"|"+SUBJ_KO[slug]+"|"+_subjectSubtitleBase(c, slug, lv));
+      });
+    });
+    var allSchools = [];
+    ["초","중","고"].forEach(function(lvKey){
+      var raw = (c.t && c.t[lvKey]) || "";
+      splitSchools(raw).forEach(function(s){ if(allSchools.indexOf(s)<0) allSchools.push(s); });
+    });
+    allSchools.forEach(function(sch){
+      SLUGS.forEach(function(slug){
+        bump("ss|"+schoolFull(sch)+"|"+SUBJ_KO[slug]+"|"+_schoolSubjSubtitleBase(c, sch, slug));
+      });
+    });
+  });
+  _h1DupeCache = new Set();
+  for(var k in count){ if(count[k] >= 2) _h1DupeCache.add(k); }
+  return _h1DupeCache;
+}
+
+/* [공개] 실제 페이지에서 호출하는 부제 함수 — 중복인 경우에만 지점명 첨부 */
 function branchSubtitle(c){
-  var brand = c.n;
-  var short = branchBrandShort(c);
-  var kw = areaKeyword(c);
-  var templates = [
-    brand + " · 초·중·고 1:1 맞춤 학습코칭",
-    kw + " 개별지도 전문 · " + brand,
-    brand + "만의 학년·과목별 개별 관리",
-    short + " " + brand + " · 학교별 시험 대비",
-    brand + " · 진단부터 실력 완성까지 밀착 코칭",
-    "초·중·고 전과목 학습코칭 · " + brand,
-    brand + " · 실력을 채우는 개별 학습 관리",
-    "1:1 맞춤 코칭 · " + short + " " + brand,
-    brand + " 코치의 밀착 관리 학습",
-    kw + " 학생을 위한 개별지도 · " + brand,
-    brand + " · 학생 맞춤 커리큘럼 설계",
-    brand + " · 부족한 부분부터 채우는 개별 코칭"
-  ];
-  return pickSeeded(strHash("bd|"+c.n), templates);
+  var base = _branchSubtitleBase(c);
+  var key = "bd|"+c.p+"|"+c.c+"|"+areaKeyword(c)+"|"+base;
+  return _getH1DupeKeys().has(key) ? (base + " · " + c.n) : base;
 }
 function subjectSubtitle(c, slug, lvl){
-  var subj = ({kor:"국어",eng:"영어",math:"수학",sci:"과학",soc:"사회"})[slug] || slug;
-  var lvName = ({elem:"초등",mid:"중등",high:"고등"})[lvl] || "";
-  var brand = c.n;
-  var kw = areaKeyword(c);
-  var templates = [
-    brand + " · " + lvName + " " + subj + " 1:1 맞춤 학습코칭",
-    brand + "의 " + lvName + " " + subj + " 개별 관리 프로그램",
-    kw + " " + lvName + " " + subj + " · 학교별 시험 대비 · " + brand,
-    brand + " " + lvName + " " + subj + " 진단·설계·완성 코칭",
-    brand + " · " + lvName + " " + subj + " 실력 향상 개별지도",
-    lvName + " " + subj + " 밀착 지도 · " + brand,
-    brand + " 코치의 " + lvName + " " + subj + " 학습 관리",
-    kw + " " + lvName + " " + subj + " 학생 맞춤 코칭 · " + brand,
-    brand + " · " + lvName + " " + subj + " 기초부터 심화까지 단계별",
-    lvName + " " + subj + " 개별 커리큘럼 · " + brand,
-    brand + " · " + lvName + " " + subj + " 부족한 부분부터 채우는 코칭",
-    brand + "의 " + lvName + " " + subj + " 성적 향상 프로그램"
-  ];
-  return pickSeeded(strHash("sj|"+c.n+"|"+slug+"|"+(lvl||"")), templates);
+  var SUBJ_KO = {kor:"국어",eng:"영어",math:"수학",sci:"과학",soc:"사회"};
+  var LVL_KO = {elem:"초등",mid:"중등",high:"고등"};
+  var base = _subjectSubtitleBase(c, slug, lvl);
+  var key = "sj|"+c.p+"|"+c.c+"|"+areaKeyword(c)+"|"+(LVL_KO[lvl]||"")+"|"+(SUBJ_KO[slug]||slug)+"|"+base;
+  return _getH1DupeKeys().has(key) ? (base + " · " + c.n) : base;
 }
 function schoolSubjSubtitle(c, sch, slug){
-  var subj = ({kor:"국어",eng:"영어",math:"수학",sci:"과학",soc:"사회"})[slug] || slug;
-  var brand = c.n;
-  var templates = [
-    brand + " · " + sch + " 재학생 " + subj + " 맞춤 시험 대비",
-    sch + " " + subj + " 개별지도 · " + brand,
-    brand + "의 " + sch + " 학생 맞춤 " + subj + " 코칭",
-    sch + " 진도 맞춤 " + subj + " 1:1 코칭 · " + brand,
-    brand + " · " + sch + " 재학생 " + subj + " 성적 향상 프로그램",
-    sch + " 시험 범위 완벽 대비 · " + brand + " " + subj,
-    brand + " 코치의 " + sch + " " + subj + " 학습 관리",
-    sch + " 커리큘럼 맞춤 " + subj + " 개별지도 · " + brand,
-    brand + " · " + sch + " 학년별 맞춤 " + subj + " 코칭",
-    sch + " 출제 경향 반영 " + subj + " 밀착 지도 · " + brand
-  ];
-  return pickSeeded(strHash("ss|"+c.n+"|"+sch+"|"+slug), templates);
+  var SUBJ_KO = {kor:"국어",eng:"영어",math:"수학",sci:"과학",soc:"사회"};
+  var base = _schoolSubjSubtitleBase(c, sch, slug);
+  var key = "ss|"+schoolFull(sch)+"|"+(SUBJ_KO[slug]||slug)+"|"+base;
+  return _getH1DupeKeys().has(key) ? (base + " · " + c.n) : base;
 }
 
 /* 짧은 술어 조각(≤4어절). 문장은 항상 '지점명/학교명/원장명 + 조각' 구조라 6어절 연속 공유가 발생하지 않음 */
