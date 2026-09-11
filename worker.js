@@ -1,3 +1,14 @@
+/* ════════════════════════════════════════════════════════
+   채움클래스  —  chaeumclass.com
+   Cloudflare Worker 소스
+
+   포함: 전화 알림 + 방문 통계
+   올리는 곳: 채움클래스 GitHub 저장소
+
+   ※ 저장소에 올릴 때 파일 이름은 worker.js 로 바꿔주세요.
+     다른 사이트 파일과 섞이지 않게 확인하세요.
+   ════════════════════════════════════════════════════════ */
+
 /* ============================================================
    채움클래스 (chaeumclass.com) — 학원 홈페이지 Worker
    ------------------------------------------------------------
@@ -2952,7 +2963,7 @@ async function submitIndexNowChunk(urlList) {
   return { status: naverStatus };
 }
 
-const _appHandler = {
+const _origHandler = {
   async fetch(req, env) {
     const url = new URL(req.url);
     const p = url.pathname;
@@ -3077,33 +3088,34 @@ const _appHandler = {
   }
 };
 
-/* ── 전화 클릭 → 텔레그램 알림 (tel-alert) ───────────────────
-   모든 HTML 응답의 </body> 앞에 추적 스크립트를 자동으로 넣습니다.
-   사이트 이름을 바꾸려면 아래 data-site 값만 수정하세요.        */
+
+/* ══════════════════════════════════════════════════════════════
+   전화 클릭 → 텔레그램 알림 + 방문 통계
+   모든 HTML 응답의 </body> 앞에 수집 스크립트를 자동으로 넣습니다.
+   ══════════════════════════════════════════════════════════════ */
+
 const TEL_ALERT_TAG =
-  '<script defer src="https://tel-aler.thdmsdidfl.workers.dev/t.js" data-site="채움클래스"></script>';
+ '<script defer src="https://tel-aler.thdmsdidfl.workers.dev/t.js" data-site="채움클래스"></' + 'script>';
 
 async function injectTelAlert(res) {
-  try {
-    const ct = res.headers.get("content-type") || "";
-    if (!ct.includes("text/html")) return res;
-
-    let html = await res.text();
-    if (html.indexOf("/t.js") >= 0) return new Response(html, res);
-
-    if (html.indexOf("</body>") >= 0) {
-      html = html.replace("</body>", TEL_ALERT_TAG + "</body>");
-    } else {
-      html += TEL_ALERT_TAG;
-    }
-    return new Response(html, res);
-  } catch (e) {
-    return res;
+ try {
+  const ct = res.headers.get("content-type") || "";
+  if (!ct.includes("text/html")) return res;
+  let html = await res.text();
+  if (html.indexOf("/t.js") >= 0) return new Response(html, res);
+  if (html.indexOf("</body>") >= 0) {
+   html = html.replace("</body>", TEL_ALERT_TAG + "</body>");
+  } else {
+   html += TEL_ALERT_TAG;
   }
+  return new Response(html, res);
+ } catch (e) {
+  return res;
+ }
 }
 
 export default {
-  async fetch(request, env, ctx) {
-    return injectTelAlert(await _appHandler.fetch(request, env, ctx));
-  }
+ async fetch(request, env, ctx) {
+  return injectTelAlert(await _origHandler.fetch(request, env, ctx));
+ }
 };
