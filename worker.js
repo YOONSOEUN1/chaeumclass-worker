@@ -24,8 +24,8 @@ const CFG = {
   tagline: "채워서 완성하는 학습 코칭",
   domain: "https://chaeumclass.com",
   // [TODO] 실제 정보로 교체
-  phone: "010-2337-2458",            // 전화 상담 번호
-  phoneTel: "01023372458",           // tel: 링크용 (숫자만)
+  phone: "010-2337-0458",            // 전화 상담 번호
+  phoneTel: "01023370458",           // tel: 링크용 (숫자만)
   kakaoUrl: "http://pf.kakao.com/_KRAjG/chat", // 카카오톡 채널 주소
   naverFormUrl: "https://naver.me/GieISRs0", // 네이버 폼(없으면 빈칸 → 버튼 숨김)
   kakaoMapKey: "a27e5e07ed05769aae7cdfdefe3b902a", // 카카오 지도 JavaScript 키
